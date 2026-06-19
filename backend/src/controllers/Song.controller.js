@@ -1,5 +1,5 @@
 const Song = require('../models/Song.model'); // isse humare pass Song aaya hai matlab song ka db hai ye
-
+const imagekit = require('../config/imagekit');
 // get all songs
 const getAllSongs = async (req,res)=>{
     try {
@@ -13,8 +13,27 @@ const getAllSongs = async (req,res)=>{
 
 const createSong = async (req,res)=>{
     try{
-        const song = await Song.create(req.body); // ye create method se hum apne database me ek naya song create karenge, req.body me jo data aayega usko use karenge
-        res.status(201).json(song); // aur phir us song ko json format me response me bhejenge
+        const imageFile = req.files.image[0]; // ye req.files se hum apne request me jo files aayi hai usme se image file ko access karenge, yaha pe image ka matlab hai ki ye field ka naam hai jo humne apne route me define kiya hai aur [0] ka matlab hai ki ye first file ko access karega kyuki humne maxCount 1 set kiya hai
+        const audioFile = req.files.audio[0]; // ye req.files se hum apne request me jo files aayi hai usme se audio file ko access karenge, yaha pe audio ka matlab hai ki ye field ka naam hai jo humne apne route me define kiya hai aur [0] ka matlab hai ki ye first file ko access karega kyuki humne maxCount 1 set kiya hai
+        
+        const imageResponse = await imagekit.upload({
+            file: imageFile.buffer, // ye image file ka buffer hai jo humne access kiya hai
+            fileName: imageFile.originalname, // ye image file ka original name hai jo humne access kiya hai    
+        })
+        const audioResponse = await imagekit.upload({
+            file:audioFile.buffer, // ye audio file ka buffer hai jo humne access kiya hai
+            fileName:audioFile.originalname, // ye audio file ka original name hai jo humne access kiya hai
+        })
+        
+        const song = await Song.create({
+            title: req.body.title,
+            artist: req.body.artist,
+            mood: req.body.mood,
+            image: imageResponse.url,
+            audio: audioResponse.url,
+        });
+        
+        return res.status(201).json(song); // aur phir us song ko json format me response me bhejenge, 201 status code ka matlab hai ki resource successfully created hai
     }catch(error){
         res.status(500).json({message: error.message}); // agar koi error aata hai to usko catch karenge aur 500 status code ke sath error message bhejenge
     }
