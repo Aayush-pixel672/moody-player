@@ -2,9 +2,14 @@ const express = require('express');
 const cors = require('cors');
 const app = express();
 
+require('dotenv').config();
+
+
 const songRoutes = require('./routes/Song.routes')
 const favoriteRoutes = require('./routes/Favorite.routes')
 const historyRoutes = require('./routes/History.routes')
+
+const authRoutes = require('./routes/Auth.routes')
 
 app.use(express.json());
 app.use(cors());
@@ -23,5 +28,7 @@ app.use('/favorites', favoriteRoutes) // yaha pe hum apne favorite routes ko use
 // jo humne favoriteroutes mein api banayai hai get ki use use karne karne ke liye hum app,js mein app.use karenge taki humare main server pe wo api work kare
 
 app.use('/history', historyRoutes) // yaha pe hum apne history routes ko use karenge taki jab bhi koi request aayegi to wo history routes ke through jayegi
+
+app.use('/auth', authRoutes) // yaha pe hum apne auth routes ko use karenge taki jab bhi koi request aayegi to wo auth routes ke through jayegi
 
 module.exports = app;
