@@ -1,44 +1,58 @@
-import { Heart } from "lucide-react"
+import { Heart } from "lucide-react";
+import api from "../services/api";
 
-const SongCard = ({ song, setCurrentSong }) => {
+const SongCard = ({
+  song,
+  favorites,
+  setFavorites,
+  setCurrentSong
+}) => {
 
-  const addToFavorites = () => {
+  const favoriteItem = favorites.find(
+  (fav) => fav?.songId?._id === song._id
+);
 
-    // GET OLD FAVORITES
+  const isFavorite = !!favoriteItem;
 
-    const oldFavorites =
-      JSON.parse(
-        localStorage.getItem("favorites")
-      ) || []
+  const addToFavorites = async () => {
 
-    // CHECK IF SONG ALREADY EXISTS
+    try {
 
-    const isAlreadyFavorite =
-      oldFavorites.find(
-        (item) => item.id === song.id
-      )
+      if (!isFavorite) {
 
-    if (isAlreadyFavorite) {
+        const response = await api.post("/favorites", {
+          songId: song._id
+        });
 
-      return alert("Song is already in favorites")
+        setFavorites([
+          ...favorites,
+          {
+            ...response.data,
+            songId: song
+          }
+        ]);
+
+      } else {
+
+        await api.delete(
+          `/favorites/${favoriteItem._id}`
+        );
+
+        setFavorites(
+          favorites.filter(
+            (fav) =>
+              fav._id !== favoriteItem._id
+          )
+        );
+
+      }
+
+    } catch (error) {
+
+      console.error("Favorite Error:", error);
+
     }
-
-    // ADD NEW SONG
-
-    const newFavorites = [
-      ...oldFavorites,
-      song
-    ]
-
-    // SAVE TO LOCAL STORAGE
-
-    localStorage.setItem(
-      "favorites",
-      JSON.stringify(newFavorites)
-    )
-
-    alert("Song added to favorites ❤️")
-  }
+  };
 
   return (
 
@@ -77,7 +91,10 @@ const SongCard = ({ song, setCurrentSong }) => {
           className="text-pink-500 hover:scale-110 transition"
         >
 
-          <Heart size={26} />
+          <Heart
+            size={26}
+            fill={isFavorite ? "currentColor" : "none"}
+          />
 
         </button>
 
@@ -95,7 +112,7 @@ const SongCard = ({ song, setCurrentSong }) => {
       </div>
 
     </div>
-  )
-}
+  );
+};
 
-export default SongCard
+export default SongCard;

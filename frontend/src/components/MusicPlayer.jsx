@@ -1,21 +1,19 @@
 import { Play, Pause, SkipForward, SkipBack } from "lucide-react";
-
 import { useEffect, useRef, useState } from "react";
+import api from "../services/api";
 
 const MusicPlayer = ({ currentSong, setCurrentSong, songsData }) => {
   const audioRef = useRef();
 
   const [isPlaying, setIsPlaying] = useState(false);
-
   const [currentTime, setCurrentTime] = useState(0);
-
   const [duration, setDuration] = useState(0);
 
   const playNextSong = () => {
     if (!currentSong) return;
 
     const currentIndex = songsData.findIndex(
-      (song) => song.id === currentSong.id,
+      (song) => song._id === currentSong._id,
     );
 
     const nextSong = songsData[(currentIndex + 1) % songsData.length];
@@ -27,7 +25,7 @@ const MusicPlayer = ({ currentSong, setCurrentSong, songsData }) => {
     if (!currentSong) return;
 
     const currentIndex = songsData.findIndex(
-      (song) => song.id === currentSong.id,
+      (song) => song._id === currentSong._id,
     );
 
     const previousSong =
@@ -35,14 +33,42 @@ const MusicPlayer = ({ currentSong, setCurrentSong, songsData }) => {
 
     setCurrentSong(previousSong);
   };
+
   // AUTO PLAY
 
   useEffect(() => {
-    if (currentSong) {
-      audioRef.current.play();
+    if (!currentSong || !audioRef.current) return;
 
-      setIsPlaying(true);
-    }
+    const playAudio = async () => {
+      try {
+        await audioRef.current.play();
+        setIsPlaying(true);
+      } catch (error) {
+        console.error("Play Error:", error);
+      }
+    };
+
+    playAudio();
+  }, [currentSong]);
+
+  // SAVE HISTORY
+
+  useEffect(() => {
+    if (!currentSong) return;
+
+    const addToHistory = async () => {
+      try {
+        await api.post("/history", {
+          songId: currentSong._id,
+        });
+
+        console.log("History saved");
+      } catch (error) {
+        console.error("History Error:", error);
+      }
+    };
+
+    addToHistory();
   }, [currentSong]);
 
   // TRACK PROGRESS
@@ -54,7 +80,6 @@ const MusicPlayer = ({ currentSong, setCurrentSong, songsData }) => {
 
     const updateProgress = () => {
       setCurrentTime(audio.currentTime);
-
       setDuration(audio.duration);
     };
 
@@ -72,11 +97,9 @@ const MusicPlayer = ({ currentSong, setCurrentSong, songsData }) => {
 
     if (isPlaying) {
       audioRef.current.pause();
-
       setIsPlaying(false);
     } else {
       audioRef.current.play();
-
       setIsPlaying(true);
     }
   };
@@ -87,7 +110,6 @@ const MusicPlayer = ({ currentSong, setCurrentSong, songsData }) => {
     if (!time) return "0:00";
 
     const minutes = Math.floor(time / 60);
-
     const seconds = Math.floor(time % 60);
 
     return `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
@@ -121,10 +143,11 @@ const MusicPlayer = ({ currentSong, setCurrentSong, songsData }) => {
       {/* CENTER */}
 
       <div className="flex flex-col items-center w-[40%]">
-        {/* CONTROLS */}
-
         <div className="flex gap-6 text-2xl">
-          <button className="hover:text-purple-400 transition" onClick={playPreviousSong}>
+          <button
+            className="hover:text-purple-400 transition"
+            onClick={playPreviousSong}
+          >
             <SkipBack size={24} />
           </button>
 
@@ -135,7 +158,10 @@ const MusicPlayer = ({ currentSong, setCurrentSong, songsData }) => {
             {isPlaying ? <Pause size={24} /> : <Play size={24} />}
           </button>
 
-          <button className="hover:text-purple-400 transition" onClick={playNextSong}>
+          <button
+            className="hover:text-purple-400 transition"
+            onClick={playNextSong}
+          >
             <SkipForward size={24} />
           </button>
         </div>
