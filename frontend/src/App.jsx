@@ -1,8 +1,4 @@
-import {
-  BrowserRouter,
-  Routes,
-  Route,
-} from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 import { useState } from "react";
 
@@ -16,35 +12,26 @@ import UploadSong from "./pages/UploadSong";
 
 import ProtectedRoutes from "./components/ProtectedRoutes";
 
-const App = () => {
+import AdminRoute from "./components/AdminRoute";
 
+import AdminDashboard from "./pages/AdminDashboard";
+
+const App = () => {
   const [currentSong, setCurrentSong] = useState(null);
 
   return (
-
     <BrowserRouter>
-
       <Routes>
-
         <Route
           path="/"
           element={
-            <Home
-              currentSong={currentSong}
-              setCurrentSong={setCurrentSong}
-            />
+            <Home currentSong={currentSong} setCurrentSong={setCurrentSong} />
           }
         />
 
-        <Route
-          path="/login"
-          element={<Login />}
-        />
+        <Route path="/login" element={<Login />} />
 
-        <Route
-          path="/register"
-          element={<Register />}
-        />
+        <Route path="/register" element={<Register />} />
 
         <Route
           path="/favorites"
@@ -59,23 +46,28 @@ const App = () => {
           path="/history"
           element={
             <ProtectedRoutes>
-              <History
-                setCurrentSong={setCurrentSong}
-              />
+              <History setCurrentSong={setCurrentSong} />
             </ProtectedRoutes>
           }
         />
         <Route
           path="/upload"
           element={
-            <UploadSong/>
+            <AdminRoute>
+              <UploadSong />
+            </AdminRoute>
           }
         />
-
+        <Route
+          path="/admin"
+          element={
+            <AdminRoute>
+              <AdminDashboard />
+            </AdminRoute>
+          }
+        />
       </Routes>
-
     </BrowserRouter>
-
   );
 };
 
