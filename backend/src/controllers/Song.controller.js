@@ -54,6 +54,8 @@ const getSongById = async (req,res)=>{
 }
 
 const DeleteSong = async(req,res)=>{
+    console.log("===== DELETE CALLED =====");
+    console.log("Song ID:", req.params.id);
     try{
         const songdelete = await Song.findByIdAndDelete(req.params.id);
         if(!songdelete){

@@ -9,6 +9,8 @@ const register = async (req,res)=>{
     try{
         const {name,email,password} = req.body;
         const existingUser = await User.findOne({email});
+        console.log( existingUser);
+        
         if(existingUser){
             return res.status(400).json({message:"User already exists"});
         }
@@ -42,12 +44,14 @@ const Login = async (req,res)=>{
         res.status(200).json({token,user:{  // ye user ka data bhej raha hai aur token ke sath
             id:user._id,
             name:user.name,
-            email:user.email
+            email:user.email,
+            role:user.role
         }})
         console.log(process.env.JWT_SECRET);
     }catch(error){
         res.status(500).json({message:"Internal server error", error:error.message});
     }
+    
 }
 
 module.exports = { register, Login };
