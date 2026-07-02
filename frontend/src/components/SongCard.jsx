@@ -1,117 +1,119 @@
-import { Heart } from "lucide-react";
+import { Heart, Play, Pause } from "lucide-react";
+import { motion } from "framer-motion";
+import toast from "react-hot-toast";
+
 import api from "../services/api";
+
+import Card from "../components/UI/Card";
+import Button from "./ui/Button";
 
 const SongCard = ({
   song,
   favorites,
   setFavorites,
-  setCurrentSong
+  setCurrentSong,
+  currentSong,
 }) => {
-
-  const favoriteItem = favorites.find(
-  (fav) => fav?.songId?._id === song._id
-);
+  const favoriteItem = favorites.find((fav) => fav?.songId?._id === song._id);
 
   const isFavorite = !!favoriteItem;
 
+  const isPlaying = currentSong?._id === song._id;
+
   const addToFavorites = async () => {
-
     try {
-
       if (!isFavorite) {
-
         const response = await api.post("/favorites", {
-          songId: song._id
+          songId: song._id,
         });
 
         setFavorites([
           ...favorites,
           {
             ...response.data,
-            songId: song
-          }
+            songId: song,
+          },
         ]);
 
+        toast.success("Added to Favorites ❤️");
       } else {
+        await api.delete(`/favorites/${favoriteItem._id}`);
 
-        await api.delete(
-          `/favorites/${favoriteItem._id}`
-        );
+        setFavorites(favorites.filter((fav) => fav._id !== favoriteItem._id));
 
-        setFavorites(
-          favorites.filter(
-            (fav) =>
-              fav._id !== favoriteItem._id
-          )
-        );
-
+        toast.success("Removed from Favorites");
       }
-
     } catch (error) {
+      console.error(error);
 
-      console.error("Favorite Error:", error);
-
+      toast.error("Favorite Action Failed");
     }
   };
 
   return (
-
-    <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 flex items-center justify-between hover:border-purple-500 hover:scale-[1.02] transition duration-300">
+    <Card
+      className={`p-5 flex justify-between items-center transition-all duration-300 ${
+        isPlaying ? "border-purple-500 shadow-lg shadow-purple-500/30" : ""
+      }`}
+    >
+      {/* LEFT */}
 
       <div className="flex items-center gap-5">
-
-        <img
+        <motion.img
+          whileHover={{
+            scale: 1.08,
+          }}
+          transition={{
+            duration: 0.2,
+          }}
           src={song.image}
-          alt=""
-          className="w-20 h-20 object-cover rounded-xl"
+          alt={song.title}
+          className="w-20 h-20 rounded-2xl object-cover"
         />
 
         <div>
+          <h2 className="text-2xl font-semibold text-white">{song.title}</h2>
 
-          <h2 className="text-xl font-semibold">
-            {song.title}
-          </h2>
+          <p className="text-zinc-400">{song.artist}</p>
 
-          <p className="text-zinc-400">
-            {song.artist}
-          </p>
-
+          <span className="inline-block mt-2 px-3 py-1 rounded-full text-xs bg-purple-600/20 text-purple-400">
+            {song.mood}
+          </span>
         </div>
-
       </div>
 
-      {/* RIGHT SIDE */}
+      {/* RIGHT */}
 
       <div className="flex items-center gap-4">
-
-        {/* FAVORITE BUTTON */}
-
-        <button
+        <motion.button
+          whileHover={{
+            scale: 1.2,
+          }}
+          whileTap={{
+            scale: 0.9,
+          }}
+          transition={{
+            duration: 0.15,
+          }}
           onClick={addToFavorites}
-          className="text-pink-500 hover:scale-110 transition"
+          className="text-pink-500"
         >
+          <Heart size={28} fill={isFavorite ? "currentColor" : "none"} />
+        </motion.button>
 
-          <Heart
-            size={26}
-            fill={isFavorite ? "currentColor" : "none"}
-          />
-
-        </button>
-
-        {/* PLAY BUTTON */}
-
-        <button
+        <Button
           onClick={() => setCurrentSong(song)}
-          className="bg-purple-600 hover:bg-purple-700 px-5 py-3 rounded-xl transition"
+          variant={isPlaying ? "success" : "primary"}
+          className="flex items-center gap-2"
         >
+          <Play size={18} />
 
-          Play
+          {isPlaying ? <Pause size={18} /> : <Play size={18} />}
 
-        </button>
-
+          {isPlaying ? "Playing" : "Play"}
+        </Button>
       </div>
-
-    </div>
+    </Card>
   );
 };
 

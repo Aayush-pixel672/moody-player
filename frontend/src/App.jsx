@@ -16,6 +16,10 @@ import AdminRoute from "./components/AdminRoute";
 
 import AdminDashboard from "./pages/AdminDashboard";
 
+import { Toaster } from "react-hot-toast";
+
+ 
+
 const App = () => {
   const [currentSong, setCurrentSong] = useState(null);
 
@@ -67,6 +71,18 @@ const App = () => {
           }
         />
       </Routes>
+      <Toaster
+        position="top-right"
+        reverseOrder={false}
+        toastOptions={{
+          duration: 2500,
+          style: {
+            background: "#18181B",
+            color: "#fff",
+            border: "1px solid #3F3F46",
+          },
+        }}
+      />
     </BrowserRouter>
   );
 };

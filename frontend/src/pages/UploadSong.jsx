@@ -2,6 +2,8 @@ import { useState } from "react";
 
 import api from "../services/api";
 
+import Input from "../components/UI/Input"
+
 const UploadSong = () => {
   const [title, setTitle] = useState("");
 
@@ -12,6 +14,7 @@ const UploadSong = () => {
   const [image, setImage] = useState(null);
 
   const [audio, setAudio] = useState(null);
+
 
   
 
@@ -53,7 +56,7 @@ const UploadSong = () => {
         <h1 className="text-4xl font-bold text-purple-500 mb-8">Upload Song</h1>
 
         <form onSubmit={handleUpload} className="space-y-5">
-          <input
+          <Input
             type="text"
             placeholder="Song Title"
             value={title}
@@ -61,7 +64,7 @@ const UploadSong = () => {
             className="w-full bg-zinc-800 p-4 rounded-xl outline-none"
           />
 
-          <input
+          <Input
             type="text"
             placeholder="Artist Name"
             value={artist}
@@ -98,7 +101,7 @@ const UploadSong = () => {
           <div>
             <p className="mb-2 text-zinc-400">Song Audio</p>
 
-            <input
+            <Input
               type="file"
               accept="audio/*"
               onChange={(e) => setAudio(e.target.files[0])}

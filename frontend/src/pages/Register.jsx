@@ -1,118 +1,147 @@
-import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
+import toast from "react-hot-toast";
+
 import api from "../services/api";
 
-const Register = () => {
+import Card from "../components/ui/Card";
+import Input from "../components/ui/Input";
+import Button from "../components/ui/Button";
+import Loader from "../components/ui/Loader";
 
-  const navigate = useNavigate();
+const UploadSong = () => {
+  const [title, setTitle] = useState("");
 
-  const [name, setName] = useState("");
+  const [artist, setArtist] = useState("");
 
-  const [email, setEmail] = useState("");
+  const [mood, setMood] = useState("Happy");
 
-  const [password, setPassword] = useState("");
+  const [image, setImage] = useState(null);
 
-  const handleRegister = async (e) => {
+  const [audio, setAudio] = useState(null);
 
+  const [loading, setLoading] = useState(false);
+
+  const handleUpload = async (e) => {
     e.preventDefault();
 
+    const formData = new FormData();
+
+    formData.append("title", title);
+    formData.append("artist", artist);
+    formData.append("mood", mood);
+    formData.append("image", image);
+    formData.append("audio", audio);
+
     try {
+      setLoading(true);
 
-      await api.post("/auth/register", {
-        name,
-        email,
-        password,
-      });
+      await api.post("/songs", formData);
 
-      alert("✅ User Registered Successfully!");
+      toast.success("Song Uploaded Successfully");
 
-      navigate("/login");
-
+      setTitle("");
+      setArtist("");
+      setMood("Happy");
+      setImage(null);
+      setAudio(null);
     } catch (error) {
-
       console.error(error);
 
-      alert(
-        error.response?.data?.message ||
-        "Registration Failed"
-      );
-
+      toast.error("Upload Failed");
+    } finally {
+      setLoading(false);
     }
-
   };
 
   return (
+    <div className="min-h-screen bg-black flex justify-center items-center px-5 py-10">
 
-    <div className="min-h-screen bg-black flex items-center justify-center">
-
-      <div className="bg-zinc-900 p-10 rounded-3xl border border-zinc-800 w-[450px]">
+      <Card className="w-full max-w-2xl p-10">
 
         <h1 className="text-4xl font-bold text-white mb-8 text-center">
-
-          Register
-
+          Upload Song
         </h1>
 
         <form
-          onSubmit={handleRegister}
+          onSubmit={handleUpload}
           className="space-y-5"
         >
 
-          <input
-            type="text"
-            placeholder="Enter Name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="w-full p-4 rounded-xl bg-zinc-800 text-white outline-none"
+          <Input
+            placeholder="Song Title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
           />
 
-          <input
-            type="email"
-            placeholder="Enter Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full p-4 rounded-xl bg-zinc-800 text-white outline-none"
+          <Input
+            placeholder="Artist Name"
+            value={artist}
+            onChange={(e) => setArtist(e.target.value)}
           />
 
-          <input
-            type="password"
-            placeholder="Enter Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full p-4 rounded-xl bg-zinc-800 text-white outline-none"
-          />
-
-          <button
-            type="submit"
-            className="w-full bg-purple-600 hover:bg-purple-700 py-4 rounded-xl font-semibold text-white transition"
+          <select
+            value={mood}
+            onChange={(e) => setMood(e.target.value)}
+            className="w-full rounded-2xl bg-zinc-900 border border-zinc-700 px-5 py-3 text-white outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-colors"
           >
+            <option>Happy</option>
+            <option>Sad</option>
+            <option>Angry</option>
+            <option>Neutral</option>
+            <option>Surprised</option>
+          </select>
 
-            Register
+          <div>
 
-          </button>
+            <p className="mb-2 text-zinc-400">
+              Song Image
+            </p>
+
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => setImage(e.target.files[0])}
+              className="text-zinc-300"
+            />
+
+          </div>
+
+          <div>
+
+            <p className="mb-2 text-zinc-400">
+              Song Audio
+            </p>
+
+            <input
+              type="file"
+              accept="audio/*"
+              onChange={(e) => setAudio(e.target.files[0])}
+              className="text-zinc-300"
+            />
+
+          </div>
+
+          <Button
+            type="submit"
+            className="w-full flex justify-center items-center gap-3"
+            disabled={loading}
+          >
+            {loading ? (
+              <>
+                <Loader size={22} />
+                Uploading...
+              </>
+            ) : (
+              "Upload Song"
+            )}
+          </Button>
 
         </form>
 
-        <p className="text-zinc-400 text-center mt-6">
-
-          Already have an account?{" "}
-
-          <Link
-            to="/login"
-            className="text-purple-500"
-          >
-
-            Login
-
-          </Link>
-
-        </p>
-
-      </div>
+      </Card>
 
     </div>
-
   );
 };
 
-export default Register;
+export default UploadSong;

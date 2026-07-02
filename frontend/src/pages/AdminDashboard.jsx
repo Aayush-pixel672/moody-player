@@ -1,6 +1,13 @@
 import { useEffect, useState } from "react";
 import api from "../services/api";
 
+import toast from "react-hot-toast";
+
+import Card from "../components/ui/Card";
+import Input from "../components/ui/Input";
+import Button from "../components/ui/Button";
+
+
 const AdminDashboard = () => {
   const [songs, setSongs] = useState([]);
 
@@ -34,10 +41,11 @@ const AdminDashboard = () => {
     try {
       await api.delete(`/songs/${id}`);
       await fetchSongs();
-      alert("Song Deleted Successfully");
+      toast.success("Song Deleted Successfully");
     } catch (err) {
       console.log(err);
-      alert("Delete Failed");
+      toast.error("Delete Failed");
+      
     }
   };
 
@@ -59,7 +67,7 @@ const AdminDashboard = () => {
         mood,
       });
 
-      alert("Song Updated Successfully");
+      toast.success("Song Updated Successfully");
 
       seteditSong(null);
 
@@ -67,7 +75,7 @@ const AdminDashboard = () => {
     } catch (err) {
       console.log(err);
 
-      alert("Update Failed");
+      toast.error("Update Failed");
     }
   };
 
@@ -89,7 +97,7 @@ const AdminDashboard = () => {
         Admin Dashboard
       </h1>
       <div className="flex gap-4 mb-8">
-        <input
+        <Input
           type="text"
           placeholder="Search by title or artist..."
           value={search}
@@ -118,9 +126,9 @@ const AdminDashboard = () => {
 
       <div className="space-y-5">
         {filteredSongs.map((song) => (
-          <div
+          <Card
             key={song._id}
-            className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 flex justify-between items-center"
+            className="p-6 flex justify-between items-center"
           >
             <div>
               <h2 className="text-2xl font-semibold">{song.title}</h2>
@@ -131,21 +139,22 @@ const AdminDashboard = () => {
             </div>
 
             <div className="flex gap-4">
-              <button
+              <Button
+                variant="secondary"
                 onClick={() => handleEdit(song)}
-                className="bg-yellow-500 px-5 py-2 rounded-lg"
+                
               >
                 Edit
-              </button>
+              </Button>
 
-              <button
+              <Button
                 onClick={() => deleteSong(song._id)}
-                className="bg-red-600 px-5 py-2 rounded-lg"
+                variant="danger"
               >
                 Delete
-              </button>
+              </Button>
             </div>
-          </div>
+          </Card>
         ))}
       </div>
       {editSong && (
@@ -155,14 +164,14 @@ const AdminDashboard = () => {
               Edit Song
             </h2>
 
-            <input
+            <Input
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               className="w-full bg-zinc-800 p-4 rounded-xl mb-4 outline-none"
             />
 
-            <input
+            <Input
               type="text"
               value={artist}
               onChange={(e) => setArtist(e.target.value)}
@@ -182,19 +191,19 @@ const AdminDashboard = () => {
             </select>
 
             <div className="flex justify-end gap-4">
-              <button
+              <Button
                 onClick={() => seteditSong(null)}
-                className="bg-zinc-700 px-5 py-2 rounded-lg"
+                variant="secondary"
               >
                 Cancel
-              </button>
+              </Button>
 
-              <button
+              <Button
                 onClick={updateSong}
                 className="bg-purple-600 hover:bg-purple-700 px-5 py-2 rounded-lg"
               >
                 Save Changes
-              </button>
+              </Button>
             </div>
           </div>
         </div>

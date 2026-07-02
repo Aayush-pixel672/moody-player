@@ -1,9 +1,14 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
+import toast from "react-hot-toast";
+
 import api from "../services/api";
 
-const Login = () => {
+import Card from "../components/ui/Card";
+import Input from "../components/ui/Input";
+import Button from "../components/ui/Button";
 
+const Login = () => {
   const navigate = useNavigate();
 
   const [email, setEmail] = useState("");
@@ -11,55 +16,41 @@ const Login = () => {
   const [password, setPassword] = useState("");
 
   const handleLogin = async (e) => {
-
     e.preventDefault();
 
     try {
-
       const response = await api.post("/auth/login", {
-
         email,
         password,
-
       });
 
-      localStorage.setItem(
-        "token",
-        response.data.token
-      );
+      localStorage.setItem("token", response.data.token);
 
       localStorage.setItem(
         "user",
         JSON.stringify(response.data.user)
       );
 
-      alert("Login Successful ✅");
+      toast.success("Login Successful");
 
       navigate("/");
-
     } catch (error) {
-
       console.error(error);
 
-      alert(
+      toast.error(
         error.response?.data?.message ||
-        "Login Failed"
+          "Login Failed"
       );
-
     }
-
   };
 
   return (
+    <div className="min-h-screen bg-black flex items-center justify-center px-5">
 
-    <div className="min-h-screen bg-black flex items-center justify-center">
+      <Card className="w-full max-w-[450px] p-10">
 
-      <div className="bg-zinc-900 p-10 rounded-3xl border border-zinc-800 w-[450px]">
-
-        <h1 className="text-4xl font-bold text-white mb-8 text-center">
-
+        <h1 className="text-4xl font-bold text-white text-center mb-8">
           Login
-
         </h1>
 
         <form
@@ -67,34 +58,30 @@ const Login = () => {
           className="space-y-5"
         >
 
-          <input
+          <Input
             type="email"
             placeholder="Enter Email"
             value={email}
             onChange={(e) =>
               setEmail(e.target.value)
             }
-            className="w-full p-4 rounded-xl bg-zinc-800 text-white outline-none"
           />
 
-          <input
+          <Input
             type="password"
             placeholder="Enter Password"
             value={password}
             onChange={(e) =>
               setPassword(e.target.value)
             }
-            className="w-full p-4 rounded-xl bg-zinc-800 text-white outline-none"
           />
 
-          <button
+          <Button
             type="submit"
-            className="w-full bg-purple-600 hover:bg-purple-700 py-4 rounded-xl font-semibold text-white transition"
+            className="w-full"
           >
-
             Login
-
-          </button>
+          </Button>
 
         </form>
 
@@ -104,19 +91,16 @@ const Login = () => {
 
           <Link
             to="/register"
-            className="text-purple-500"
+            className="text-purple-500 hover:text-purple-400 transition-colors"
           >
-
             Register
-
           </Link>
 
         </p>
 
-      </div>
+      </Card>
 
     </div>
-
   );
 };
 
