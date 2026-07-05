@@ -1,147 +1,233 @@
+import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { motion } from "framer-motion";
 import toast from "react-hot-toast";
+import { User, Mail, Lock, Eye, EyeOff, UserPlus, Loader2 } from "lucide-react";
 
 import api from "../services/api";
 
 import Card from "../components/ui/Card";
 import Input from "../components/ui/Input";
 import Button from "../components/ui/Button";
-import Loader from "../components/ui/Loader";
 
-const UploadSong = () => {
-  const [title, setTitle] = useState("");
+const Register = () => {
+  const navigate = useNavigate();
 
-  const [artist, setArtist] = useState("");
+  const [name, setName] = useState("");
 
-  const [mood, setMood] = useState("Happy");
+  const [email, setEmail] = useState("");
 
-  const [image, setImage] = useState(null);
+  const [password, setPassword] = useState("");
 
-  const [audio, setAudio] = useState(null);
+  const [confirmPassword, setConfirmPassword] = useState("");
+
+  const [showPassword, setShowPassword] = useState(false);
+
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const [loading, setLoading] = useState(false);
 
-  const handleUpload = async (e) => {
+  const handleRegister = async (e) => {
     e.preventDefault();
 
-    const formData = new FormData();
-
-    formData.append("title", title);
-    formData.append("artist", artist);
-    formData.append("mood", mood);
-    formData.append("image", image);
-    formData.append("audio", audio);
+    if (password !== confirmPassword) {
+      toast.error("Passwords do not match");
+      return;
+    }
 
     try {
       setLoading(true);
 
-      await api.post("/songs", formData);
+      await api.post("/auth/register", {
+        name,
+        email,
+        password,
+      });
 
-      toast.success("Song Uploaded Successfully");
+      toast.success("Registration Successful 🎉");
 
-      setTitle("");
-      setArtist("");
-      setMood("Happy");
-      setImage(null);
-      setAudio(null);
+      navigate("/login");
     } catch (error) {
       console.error(error);
 
-      toast.error("Upload Failed");
+      toast.error(error.response?.data?.message || "Registration Failed");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-black flex justify-center items-center px-5 py-10">
+    <div className="relative min-h-screen bg-black flex items-center justify-center px-5 overflow-hidden">
+      {/* Background Glow */}
 
-      <Card className="w-full max-w-2xl p-10">
+      <div className="absolute w-[500px] h-[500px] bg-purple-600/20 blur-[140px] rounded-full -top-32 -left-32" />
 
-        <h1 className="text-4xl font-bold text-white mb-8 text-center">
-          Upload Song
-        </h1>
+      <div className="absolute w-[450px] h-[450px] bg-pink-500/20 blur-[140px] rounded-full bottom-0 right-0" />
 
-        <form
-          onSubmit={handleUpload}
-          className="space-y-5"
-        >
+      <motion.div
+        initial={{ opacity: 0, y: 40, scale: 0.97 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.5 }}
+      >
+        <Card className="relative z-10 w-full max-w-[500px] p-10 backdrop-blur-xl">
+          <p className="text-purple-400 text-center font-semibold tracking-[0.25em] uppercase mb-2">
+            Join Moody Player
+          </p>
 
-          <Input
-            placeholder="Song Title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-          />
+          <h1 className="text-4xl font-extrabold text-white text-center">
+            Create Account
+          </h1>
 
-          <Input
-            placeholder="Artist Name"
-            value={artist}
-            onChange={(e) => setArtist(e.target.value)}
-          />
+          <p className="text-zinc-400 text-center mt-4 mb-8 leading-7">
+            Create your account and start discovering music based on your mood.
+          </p>
 
-          <select
-            value={mood}
-            onChange={(e) => setMood(e.target.value)}
-            className="w-full rounded-2xl bg-zinc-900 border border-zinc-700 px-5 py-3 text-white outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-colors"
-          >
-            <option>Happy</option>
-            <option>Sad</option>
-            <option>Angry</option>
-            <option>Neutral</option>
-            <option>Surprised</option>
-          </select>
+          <form onSubmit={handleRegister} className="space-y-5">
+            {/* Full Name */}
 
-          <div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-zinc-300">
+                Full Name
+              </label>
 
-            <p className="mb-2 text-zinc-400">
-              Song Image
-            </p>
+              <div className="relative">
+                <User
+                  size={18}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none"
+                />
 
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(e) => setImage(e.target.files[0])}
-              className="text-zinc-300"
-            />
+                <Input
+                  type="text"
+                  placeholder="Enter Full Name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="pl-12"
+                />
+              </div>
+            </div>
 
+            {/* Email */}
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-zinc-300">
+                Email Address
+              </label>
+
+              <div className="relative">
+                <Mail
+                  size={18}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none"
+                />
+
+                <Input
+                  type="email"
+                  placeholder="Enter Email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="pl-12"
+                />
+              </div>
+            </div>
+
+            {/* Password */}
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-zinc-300">
+                Password
+              </label>
+
+              <div className="relative">
+                <Lock
+                  size={18}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none"
+                />
+
+                <Input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Enter Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="pl-12 pr-12"
+                />
+
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-purple-400 transition-colors"
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+            </div>
+
+            {/* Confirm Password */}
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-zinc-300">
+                Confirm Password
+              </label>
+
+              <div className="relative">
+                <Lock
+                  size={18}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none"
+                />
+
+                <Input
+                  type={showConfirmPassword ? "text" : "password"}
+                  placeholder="Confirm Password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="pl-12 pr-12"
+                />
+
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-purple-400 transition-colors"
+                >
+                  {showConfirmPassword ? (
+                    <EyeOff size={18} />
+                  ) : (
+                    <Eye size={18} />
+                  )}
+                </button>
+              </div>
+            </div>
+            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}>
+              <Button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-gradient-to-r from-purple-600 to-pink-500 hover:shadow-xl hover:shadow-purple-500/30 transition-all duration-300 py-3 rounded-2xl font-semibold text-lg flex items-center justify-center gap-3"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 size={20} className="animate-spin" />
+                    Creating Account...
+                  </>
+                ) : (
+                  <>
+                    <UserPlus size={20} />
+                    Create Account
+                  </>
+                )}
+              </Button>
+            </motion.div>
+          </form>
+          <div className="mt-8 text-center border-t border-zinc-800 pt-6">
+            <p className="text-zinc-400">Already have an account?</p>
+
+            <Link
+              to="/login"
+              className="inline-block mt-2 font-semibold text-purple-400 hover:text-pink-400 transition-all duration-300 hover:translate-x-1"
+            >
+              Login →
+            </Link>
           </div>
-
-          <div>
-
-            <p className="mb-2 text-zinc-400">
-              Song Audio
-            </p>
-
-            <input
-              type="file"
-              accept="audio/*"
-              onChange={(e) => setAudio(e.target.files[0])}
-              className="text-zinc-300"
-            />
-
-          </div>
-
-          <Button
-            type="submit"
-            className="w-full flex justify-center items-center gap-3"
-            disabled={loading}
-          >
-            {loading ? (
-              <>
-                <Loader size={22} />
-                Uploading...
-              </>
-            ) : (
-              "Upload Song"
-            )}
-          </Button>
-
-        </form>
-
-      </Card>
-
+        </Card>
+      </motion.div>
     </div>
   );
 };
 
-export default UploadSong;
+export default Register;
