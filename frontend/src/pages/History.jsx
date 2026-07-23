@@ -44,20 +44,23 @@ const History = ({ setCurrentSong }) => {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white p-10">
+    <div className="min-h-screen bg-black px-4 py-6 text-white sm:px-6 md:p-10">
       <div className="mb-12">
         <p className="text-purple-400 font-semibold tracking-[0.25em] uppercase mb-2">
           Your Music Journey
         </p>
 
-        <h1 className="text-5xl font-extrabold">Recently Played</h1>
+        <h1 className="text-3xl font-extrabold sm:text-4xl lg:text-5xl">
+          Recently Played
+          
+        </h1>
 
-        <p className="text-zinc-400 mt-4 text-lg max-w-2xl">
+        <p className="mt-4 max-w-2xl text-base text-zinc-400 sm:text-lg">
           Browse every song you've listened to and jump back into your favorite
           tracks anytime.
         </p>
 
-        <div className="mt-6 inline-flex items-center gap-2 bg-purple-600/15 border border-purple-500/20 px-5 py-3 rounded-full">
+        <div className="mt-6 inline-flex flex-wrap items-center gap-2 rounded-full border border-purple-500/20 bg-purple-600/15 px-4 py-2 sm:px-5 sm:py-3">
           <span className="text-2xl">🎵</span>
 
           <span className="font-semibold">{history.length} Songs Played</span>
@@ -68,7 +71,7 @@ const History = ({ setCurrentSong }) => {
         <div className="mb-8">
           <button
             onClick={clearHistory}
-            className="flex items-center gap-2 px-5 py-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white transition-all duration-300"
+            className="flex w-full items-center justify-center gap-2 rounded-xl border border-red-500/20 bg-red-500/10 px-5 py-3 text-red-400 transition-all duration-300 hover:bg-red-500 hover:text-white sm:w-fit"
           >
             🗑️ Clear History
           </button>
@@ -81,9 +84,9 @@ const History = ({ setCurrentSong }) => {
         <div className="flex flex-col items-center justify-center py-24">
           <div className="text-8xl mb-6">🎧</div>
 
-          <h2 className="text-4xl font-bold mb-4">No Listening History Yet</h2>
+          <h2 className="mb-4 text-2xl font-bold sm:text-3xl lg:text-4xl">No Listening History Yet</h2>
 
-          <p className="text-zinc-400 text-center max-w-lg leading-8">
+          <p className="max-w-lg text-center text-base leading-7 text-zinc-400 sm:text-lg sm:leading-8">
             Start playing your favorite songs and we'll keep track of your
             listening history here.
           </p>
@@ -105,7 +108,7 @@ const History = ({ setCurrentSong }) => {
         {history.map((item, index) => (
           <motion.div
             key={item._id}
-            className="bg-gradient-to-br from-zinc-900 to-zinc-950 border border-zinc-800 hover:border-purple-500/40 rounded-3xl p-5 flex items-center justify-between transition-all duration-300 hover:shadow-xl hover:shadow-purple-500/10"
+            className="flex flex-col gap-5 rounded-3xl border border-zinc-800 bg-gradient-to-br from-zinc-900 to-zinc-950 p-4 transition-all duration-300 hover:border-purple-500/40 hover:shadow-xl hover:shadow-purple-500/10 sm:flex-row sm:items-center sm:justify-between sm:p-5"
             initial={{ opacity: 0, y: 40, scale: 0.97 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={{
@@ -117,18 +120,18 @@ const History = ({ setCurrentSong }) => {
             <img
               src={item.songId?.image}
               alt=""
-              className="w-24 h-24 rounded-2xl object-cover border border-white/10 shadow-lg"
+              className="h-20 w-20 self-center rounded-2xl border border-white/10 object-cover shadow-lg sm:h-24 sm:w-24 sm:self-auto"
             />
 
-            <div className="flex justify-between items-center w-full">
-              <div>
-                <h2 className="text-2xl font-bold text-white">
+            <div className="flex w-full flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="min-w-0">
+                <h2 className="truncate text-lg font-bold text-white sm:text-xl lg:text-2xl">
                   {item.songId?.title}
                 </h2>
 
-                <p className="text-zinc-400 mt-1">{item.songId?.artist}</p>
+                <p className="mt-1 truncate text-sm text-zinc-400 sm:text-base">{item.songId?.artist}</p>
 
-                <div className="flex items-center gap-3 mt-4">
+                <div className="mt-4 flex flex-wrap items-center gap-2 sm:gap-3">
                   <span className="px-3 py-1 rounded-full bg-purple-500/15 text-purple-400 text-xs font-medium">
                     {item.songId?.mood}
                   </span>
@@ -139,17 +142,17 @@ const History = ({ setCurrentSong }) => {
                 </div>
               </div>
 
-              <div className="flex items-center gap-3">
+              <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center">
                 <button
                   onClick={() => playAgain(item.songId)}
-                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-pink-500 hover:scale-105 transition-all duration-300 shadow-lg shadow-purple-500/30"
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-purple-600 to-pink-500 px-5 py-2.5 shadow-lg shadow-purple-500/30 transition-all duration-300 hover:scale-105 sm:w-auto"
                 >
                   ▶ Play Again
                 </button>
 
                 <button
                   onClick={() => removeHistory(item._id)}
-                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white transition-all duration-300"
+                  className="flex w-full items-center justify-center gap-2 rounded-xl border border-red-500/20 bg-red-500/10 px-5 py-2.5 text-red-400 transition-all duration-300 hover:bg-red-500 hover:text-white sm:w-auto"
                 >
                   🗑 Remove
                 </button>

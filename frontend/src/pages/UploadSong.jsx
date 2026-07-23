@@ -56,27 +56,29 @@ const UploadSong = () => {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white p-10">
+    <div className="min-h-screen bg-black px-4 py-6 text-white sm:px-6 md:p-10">
       <motion.div
-        className="max-w-2xl mx-auto bg-zinc-900 rounded-3xl border border-zinc-800 p-10"
+        className="mx-auto max-w-2xl rounded-3xl border border-zinc-800 bg-zinc-900 p-5 sm:p-8 lg:p-10"
         initial={{ opacity: 0, y: 40, scale: 0.98 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ duration: 0.6, ease: "easeOut" }}
       >
-        <div className="mb-10">
-          <p className="text-purple-400 font-semibold tracking-[0.25em] uppercase mb-2">
+        <div className="mb-8 sm:mb-10">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-[0.25em] text-purple-400 sm:text-sm">
             Admin Panel
           </p>
 
-          <h1 className="text-5xl font-extrabold">Upload New Song</h1>
+          <h1 className="text-3xl font-extrabold sm:text-4xl lg:text-5xl">
+            Upload New Song
+          </h1>
 
-          <p className="text-zinc-400 mt-4 text-lg leading-8">
+          <p className="mt-4 text-base leading-7 text-zinc-400 sm:text-lg sm:leading-8">
             Add a new song to your AI-powered music library by filling in the
             details below.
           </p>
         </div>
 
-        <form onSubmit={handleUpload} className="space-y-5">
+        <form onSubmit={handleUpload} className="space-y-4 sm:space-y-5">
           <motion.div
             whileHover={{ scale: 1.01 }}
             transition={{ duration: 0.2 }}
@@ -86,7 +88,7 @@ const UploadSong = () => {
               placeholder="Song Title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full bg-zinc-900/70 border border-zinc-700 rounded-2xl px-5 py-4 focus:border-purple-500 transition-all"
+              className="w-full rounded-2xl border border-zinc-700 bg-zinc-900/70 px-4 py-3 text-sm transition-all focus:border-purple-500 sm:px-5 sm:py-4 sm:text-base"
             />
           </motion.div>
 
@@ -99,7 +101,7 @@ const UploadSong = () => {
               placeholder="Artist Name"
               value={artist}
               onChange={(e) => setArtist(e.target.value)}
-              className="w-full bg-zinc-900/70 border border-zinc-700 rounded-2xl px-5 py-4 focus:border-purple-500 transition-all"
+              className="w-full rounded-2xl border border-zinc-700 bg-zinc-900/70 px-4 py-3 text-sm transition-all focus:border-purple-500 sm:px-5 sm:py-4 sm:text-base"
             />
           </motion.div>
 
@@ -119,13 +121,20 @@ const UploadSong = () => {
               <motion.div
                 whileHover={{ scale: 1.02 }}
                 transition={{ duration: 0.25 }}
-                className="border-2 border-dashed border-zinc-700 hover:border-purple-500 hover:shadow-xl hover:shadow-purple-500/20 rounded-3xl p-8 flex flex-col items-center justify-center transition-all duration-300 bg-zinc-900/50"
+                className="flex flex-col items-center justify-center rounded-3xl border-2 border-dashed border-zinc-700 bg-zinc-900/50 p-5 transition-all duration-300 hover:border-purple-500 hover:shadow-xl hover:shadow-purple-500/20 sm:p-8"
               >
-                <ImagePlus size={56} className="text-purple-400 mb-4" />
+                <ImagePlus
+                  size={48}
+                  className="mb-4 text-purple-400 sm:size-14"
+                />
 
-                <p className="font-semibold text-lg">Click to Upload Image</p>
+                <p className="text-center text-base font-semibold sm:text-lg">
+                  Click to Upload Image
+                </p>
 
-                <p className="text-zinc-400 text-sm mt-2">JPG, PNG or WEBP</p>
+                <p className="mt-2 text-center text-xs text-zinc-400 sm:text-sm">
+                  JPG, PNG or WEBP
+                </p>
 
                 {preview && (
                   <motion.img
@@ -134,7 +143,8 @@ const UploadSong = () => {
                     transition={{ duration: 0.3 }}
                     src={preview}
                     alt="Preview"
-                    className="w-40 h-40 object-cover rounded-2xl mt-6 border border-purple-500/20 shadow-lg"
+                    className="mt-6 h-32 w-32 rounded-2xl border border-purple-500/20 object-cover shadow-lg sm:h-40 sm:w-40"
+          
                   />
                 )}
 
@@ -142,7 +152,7 @@ const UploadSong = () => {
                   <motion.p
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="mt-4 text-green-400 text-sm font-medium"
+                    className="mt-4 break-all text-center text-sm font-medium text-green-400"
                   >
                     ✅ {image.name}
                   </motion.p>
@@ -170,22 +180,26 @@ const UploadSong = () => {
             <p className="text-sm font-medium text-zinc-400 mb-3">Audio File</p>
 
             <label className="cursor-pointer">
-              <motion.div 
-                whileHover = {{scale:1.02}}
+              <motion.div
+                whileHover={{ scale: 1.02 }}
                 transition={{ duration: 0.25 }}
-                className="border-2 border-dashed border-zinc-700 hover:border-pink-500 rounded-3xl p-8 flex flex-col items-center justify-center transition-all duration-300 bg-zinc-900/50"
+                className="flex flex-col items-center justify-center rounded-3xl border-2 border-dashed border-zinc-700 bg-zinc-900/50 p-5 transition-all duration-300 hover:border-pink-500 sm:p-8"
               >
-                <Music4 size={56} className="text-pink-400 mb-4" />
+                <Music4 size={48} className="mb-4 text-pink-400 sm:size-14" />
 
-                <p className="font-semibold text-lg">Click to Upload Audio</p>
+                <p className="text-center text-base font-semibold sm:text-lg">
+                  Click to Upload Audio
+                </p>
 
-                <p className="text-zinc-400 text-sm mt-2">MP3, WAV</p>
+                <p className="mt-2 text-center text-xs text-zinc-400 sm:text-sm">
+                  MP3, WAV
+                </p>
 
                 {audio && (
                   <motion.p
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="mt-4 text-green-400 text-sm font-medium"
+                    className="mt-4 break-all text-center text-sm font-medium text-green-400"
                   >
                     ✅ {audio.name}
                   </motion.p>
@@ -206,7 +220,7 @@ const UploadSong = () => {
             disabled={loading}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.97 }}
-            className="w-full mt-4 bg-gradient-to-r from-purple-600 to-pink-500 py-4 rounded-2xl font-semibold flex justify-center items-center gap-3 shadow-xl shadow-purple-500/20 disabled:opacity-60"
+            className="mt-4 flex w-full items-center justify-center gap-3 rounded-2xl bg-gradient-to-r from-purple-600 to-pink-500 py-3 text-sm font-semibold shadow-xl shadow-purple-500/20 transition-all disabled:opacity-60 sm:py-4 sm:text-base"
           >
             {loading ? (
               <>

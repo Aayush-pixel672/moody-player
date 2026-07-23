@@ -30,20 +30,20 @@ const Favorites = () => {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white p-10">
+    <div className="min-h-screen bg-black px-4 py-6 text-white sm:px-6 md:p-10">
       <div className="mb-12">
         <p className="text-purple-400 font-semibold tracking-[0.25em] uppercase mb-2">
           Your Collection
         </p>
 
-        <h1 className="text-5xl font-extrabold">Favorite Songs</h1>
+        <h1 className="text-3xl font-extrabold sm:text-4xl lg:text-5xl">Favorite Songs</h1>
 
-        <p className="text-zinc-400 mt-4 text-lg max-w-2xl">
+        <p className="mt-4 max-w-2xl text-base text-zinc-400 sm:text-lg">
           All the songs you've loved in one place. Enjoy quick access to your
           favorite tracks anytime.
         </p>
 
-        <div className="mt-6 inline-flex items-center gap-2 bg-pink-500/15 border border-pink-500/20 px-5 py-3 rounded-full">
+        <div className="mt-6 inline-flex flex-wrap items-center gap-2 rounded-full border border-pink-500/20 bg-pink-500/15 px-4 py-2 sm:px-5 sm:py-3">
           <span className="text-2xl">❤️</span>
 
           <span className="font-semibold">
@@ -58,14 +58,14 @@ const Favorites = () => {
         <div className="flex flex-col items-center justify-center py-24">
           <div className="text-8xl mb-6">❤️</div>
 
-          <h2 className="text-4xl font-bold mb-4">No Favorite Songs Yet</h2>
+          <h2 className="mb-4 text-2xl font-bold sm:text-3xl lg:text-4xl">No Favorite Songs Yet</h2>
 
-          <p className="text-zinc-400 text-center max-w-lg leading-8">
+          <p className="max-w-lg text-center text-base leading-7 text-zinc-400 sm:text-lg sm:leading-8">
             Start adding songs to your favorites and build your own personal
             music collection.
           </p>
 
-          <div className="mt-8 px-6 py-3 rounded-full bg-pink-500/10 border border-pink-500/20 text-pink-400 font-medium">
+          <div className="mt-8 inline-flex flex-wrap items-center rounded-full border border-pink-500/20 bg-pink-500/10 px-5 py-3 text-center font-medium text-pink-400">
             Your favorite songs will appear here.
           </div>
         </div>
@@ -80,7 +80,7 @@ const Favorites = () => {
         {favorites.map((favorite,index) => (
           <motion.div
             key={favorite._id}
-            className="bg-gradient-to-br from-zinc-900 to-zinc-950 border border-zinc-800 hover:border-pink-500/40 rounded-3xl p-5 flex items-center justify-between transition-all duration-300 hover:shadow-xl hover:shadow-pink-500/10"
+            className="flex flex-col gap-5 rounded-3xl border border-zinc-800 bg-gradient-to-br from-zinc-900 to-zinc-950 p-4 transition-all duration-300 hover:border-pink-500/40 hover:shadow-xl hover:shadow-pink-500/10 sm:flex-row sm:items-center sm:justify-between sm:p-5"
             initial={{ opacity: 0, y: 40 ,scale: 0.97}}
             animate={{ opacity: 1, y: 0,scale: 1}}
             transition={{ duration: 0.5, delay: index * 0.15,ease: "easeOut" }}
@@ -88,25 +88,25 @@ const Favorites = () => {
             <img
               src={favorite.songId?.image}
               alt={favorite.songId?.title}
-              className="w-24 h-24 rounded-2xl object-cover border border-white/10 shadow-lg"
+              className="h-20 w-20 self-center rounded-2xl border border-white/10 object-cover shadow-lg sm:h-24 sm:w-24 sm:self-auto"
             />
 
-            <div className="flex justify-between items-center w-full">
-              <div>
-                <h2 className="text-2xl font-bold text-white">
+            <div className="flex w-full flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="min-w-0">
+                <h2 className="truncate text-lg font-bold text-white sm:text-xl lg:text-2xl">
                   {favorite.songId?.title}
                 </h2>
 
-                <p className="text-zinc-400 mt-1">{favorite.songId?.artist}</p>
+                <p className="mt-1 truncate text-sm text-zinc-400 sm:text-base">{favorite.songId?.artist}</p>
 
-                <span className="inline-block mt-4 px-3 py-1 rounded-full bg-pink-500/15 text-pink-400 text-xs font-medium">
+                <span className="mt-4 inline-block rounded-full bg-pink-500/15 px-3 py-1 text-xs font-medium text-pink-400">
                   {favorite.songId?.mood}
                 </span>
               </div>
 
               <button
                 onClick={() => removeFavorite(favorite._id)}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white transition-all duration-300"
+                className="flex w-full items-center justify-center gap-2 rounded-xl border border-red-500/20 bg-red-500/10 px-5 py-2.5 text-red-400 transition-all duration-300 hover:bg-red-500 hover:text-white sm:w-auto"
               >
                 🗑 Remove
               </button>
