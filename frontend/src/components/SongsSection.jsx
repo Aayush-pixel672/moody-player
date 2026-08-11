@@ -10,9 +10,12 @@ const SongsSection = ({
   currentSong,
   mood,
   isPlaying,
+  setStartDetection,
 }) => {
   const songsGridRef = useRef(null);
-  const filteredSongs = songs.filter((song) => song.mood === mood);
+  const filteredSongs = songs.filter(
+    (song) => song.mood?.toLowerCase() === mood?.toLowerCase(),
+  );
   useEffect(() => {
     if (filteredSongs.length === 0) return;
 
@@ -33,6 +36,7 @@ const SongsSection = ({
                 favorites={favorites}
                 setFavorites={setFavorites}
                 isPlaying={isPlaying}
+                setStartDetection={setStartDetection}
               />
             </div>
           ))

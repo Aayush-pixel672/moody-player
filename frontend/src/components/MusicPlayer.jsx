@@ -11,13 +11,16 @@ import {
 import { useEffect, useRef, useState } from "react";
 import api from "../services/api";
 import { gsap } from "gsap";
+import { useMusic } from "../context/MusicContext";
 const MusicPlayer = ({
+  songsData
+}) => {
+  const {
   currentSong,
   setCurrentSong,
-  songsData,
   isPlaying,
   setIsPlaying,
-}) => {
+} = useMusic();
   const audioRef = useRef(null);
   const albumArtRef = useRef(null);
   const rotationTweenRef = useRef(null);

@@ -36,12 +36,12 @@ const Navbar = () => {
 
     navigate("/");
   };
-  
-
-  
 
   return (
-    <nav ref={navbarRef} className="sticky top-0 z-50 h-20 flex items-center justify-between px-4 md:px-6 lg:px-10 backdrop-blur-xl bg-zinc-950/70 border-b border-white/10 shadow-lg">
+    <nav
+      ref={navbarRef}
+      className="sticky top-0 z-50 h-20 flex items-center justify-between px-4 md:px-6 lg:px-10 backdrop-blur-xl bg-zinc-950/70 border-b border-white/10 shadow-lg"
+    >
       <div className="flex items-center gap-3">
         <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-purple-600 to-pink-500 flex items-center justify-center text-xl shadow-lg shadow-purple-500/40">
           🎵
@@ -90,6 +90,8 @@ const Navbar = () => {
               <Heart size={18} />
               Favorites
             </Link>
+
+            <Link to="/playlists">Playlists</Link>
 
             {/* Admin Dashboard */}
             {user.role === "admin" && (

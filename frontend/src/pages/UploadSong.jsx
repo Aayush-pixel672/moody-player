@@ -1,243 +1,704 @@
-import { useState } from "react";
-import { ImagePlus, Music4, UploadCloud, Loader2 } from "lucide-react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
+import { gsap } from "gsap";
+import {
+  UploadCloud,
+  Music2,
+  ImageIcon,
+  CheckCircle2,
+  XCircle,
+  Loader2,
+  RotateCcw,
+  AlertTriangle,
+  X,
+  Sparkles,
+  Disc3,
+} from "lucide-react";
+
 import api from "../services/api";
-import MoodDropdown from "../components/UI/MoodDropdown";
-import Input from "../components/UI/Input";
 import { toast } from "react-hot-toast";
-import { motion } from "framer-motion";
-const UploadSong = () => {
-  const [title, setTitle] = useState("");
+import MoodDropdown from "../components/UI/MoodDropdown";
+// ----------------------------------------------------------------
+// Mock "already uploaded" songs — duplicate check isse compare karega.
+// Real app mein ye API se aayega (GET /songs).
+// ----------------------------------------------------------------
+const MOCK_EXISTING_SONGS = [
+  { title: "Kesariya", artist: "Arijit Singh" },
+  { title: "Tum Hi Ho", artist: "Arijit Singh" },
+  { title: "Blinding Lights", artist: "The Weeknd" },
+];
 
-  const [artist, setArtist] = useState("");
+const MAX_IMAGE_SIZE_MB = 5;
+const MAX_AUDIO_SIZE_MB = 25;
+const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
+const ACCEPTED_AUDIO_TYPES = [
+  "audio/mpeg",
+  "audio/wav",
+  "audio/mp3",
+  "audio/ogg",
+];
 
-  const [mood, setMood] = useState("Happy");
+function normalize(str) {
+  return str.trim().toLowerCase();
+}
 
-  const [image, setImage] = useState(null);
+export default function UploadSong() {
+  // ---------------- Form state ----------------
+  const [formData, setFormData] = useState({
+    title: "",
+    artist: "",
+    album: "",
+    mood: "Happy", // Default mood
+  });
+  const [imageFile, setImageFile] = useState(null);
+  const [audioFile, setAudioFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
+  const [audioPreview, setAudioPreview] = useState(null);
 
-  const [audio, setAudio] = useState(null);
-
-  const [preview, setPreview] = useState("");
-
+  const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [toasts, setToasts] = useState([]);
 
-  const handleUpload = async (e) => {
+  const [recentUploads, setRecentUploads] = useState([]);
+
+  // ---------------- Refs for GSAP ----------------
+  const containerRef = useRef(null);
+  const navigate = useNavigate();
+  const heroRef = useRef(null);
+  const formCardRef = useRef(null);
+  const tableRef = useRef(null);
+  const progressBarRef = useRef(null);
+
+  // ---------------- Entrance animation ----------------
+  useEffect(() => {
+    const ctx = gsap.context(() => {
+      gsap.fromTo(
+        heroRef.current,
+        { opacity: 0, y: -16 },
+        { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" },
+      );
+      gsap.fromTo(
+        formCardRef.current,
+        { opacity: 0, y: 28 },
+        { opacity: 1, y: 0, duration: 0.6, delay: 0.1, ease: "power3.out" },
+      );
+      gsap.fromTo(
+        tableRef.current,
+        { opacity: 0, y: 28 },
+        { opacity: 1, y: 0, duration: 0.6, delay: 0.25, ease: "power3.out" },
+      );
+    }, containerRef);
+    return () => ctx.revert();
+  }, []);
+
+  // ---------------- Animate progress bar width ----------------
+  useEffect(() => {
+    if (progressBarRef.current) {
+      gsap.to(progressBarRef.current, {
+        width: `${uploadProgress}%`,
+        duration: 0.3,
+        ease: "power1.out",
+      });
+    }
+  }, [uploadProgress]);
+
+  // ---------------- Toast helpers ----------------
+  const addToast = useCallback((type, message) => {
+    const id = Date.now() + Math.random();
+    setToasts((prev) => [...prev, { id, type, message }]);
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== id));
+    }, 3500);
+  }, []);
+
+  const dismissToast = (id) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  };
+
+  // ---------------- Input change ----------------
+  const handleTextChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    setErrors((prev) => ({ ...prev, [name]: null }));
+  };
+
+  // ---------------- Image upload + preview ----------------
+  const handleImageChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
+      setErrors((prev) => ({
+        ...prev,
+        image: "Sirf JPG, PNG ya WEBP allowed hai",
+      }));
+      return;
+    }
+    if (file.size > MAX_IMAGE_SIZE_MB * 1024 * 1024) {
+      setErrors((prev) => ({
+        ...prev,
+        image: `Image size ${MAX_IMAGE_SIZE_MB}MB se kam honi chahiye`,
+      }));
+      return;
+    }
+
+    setErrors((prev) => ({ ...prev, image: null }));
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
+  };
+
+  // ---------------- Audio upload + preview ----------------
+  const handleAudioChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!ACCEPTED_AUDIO_TYPES.includes(file.type)) {
+      setErrors((prev) => ({
+        ...prev,
+        audio: "Sirf MP3, WAV ya OGG allowed hai",
+      }));
+      return;
+    }
+    if (file.size > MAX_AUDIO_SIZE_MB * 1024 * 1024) {
+      setErrors((prev) => ({
+        ...prev,
+        audio: `Audio size ${MAX_AUDIO_SIZE_MB}MB se kam honi chahiye`,
+      }));
+      return;
+    }
+
+    setErrors((prev) => ({ ...prev, audio: null }));
+    setAudioFile(file);
+    setAudioPreview(URL.createObjectURL(file));
+  };
+
+  // ---------------- Validation ----------------
+  const validate = () => {
+    const newErrors = {};
+    if (!formData.title.trim()) newErrors.title = "Song title zaroori hai";
+    if (!formData.artist.trim()) newErrors.artist = "Artist name zaroori hai";
+    if (!imageFile) newErrors.image = "Cover image zaroori hai";
+    if (!audioFile) newErrors.audio = "Audio file zaroori hai";
+
+    // Duplicate check — mock list + jo already recentUploads mein hai
+    const allSongs = [...MOCK_EXISTING_SONGS, ...recentUploads];
+    const isDuplicate = allSongs.some(
+      (s) =>
+        normalize(s.title) === normalize(formData.title) &&
+        normalize(s.artist) === normalize(formData.artist),
+    );
+    if (isDuplicate && formData.title && formData.artist) {
+      newErrors.duplicate =
+        "Ye song already upload ho chuka hai (same title + artist)";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  // ---------------- Simulated upload (replace with real API) ----------------
+
+  // ---------------- Submit ----------------
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (!validate()) {
+      gsap.fromTo(
+        formCardRef.current,
+        { x: -8 },
+        {
+          x: 0,
+          duration: 0.4,
+          ease: "elastic.out(1, 0.4)",
+        },
+      );
+
+      addToast("error", "Form mein kuch errors hain, please check karein");
+
+      return;
+    }
+
     setLoading(true);
-
-    const formData = new FormData();
-
-    formData.append("title", title);
-    formData.append("artist", artist);
-    formData.append("mood", mood);
-    formData.append("image", image);
-    formData.append("audio", audio);
+    setUploadProgress(0);
 
     try {
-      const response = await api.post("/songs", formData);
+      const data = new FormData();
 
-      console.log(response.data);
+      data.append("title", formData.title.trim());
+      data.append("artist", formData.artist.trim());
 
-      toast.success("Song Uploaded Successfully 🎉");
+      // IMPORTANT:
+      // Backend me mood required hai.
+      data.append("mood", formData.mood);
 
-      setTitle("");
-      setArtist("");
-      setMood("Happy");
-      setImage(null);
-      setAudio(null);
-      setPreview("");
+      data.append("image", imageFile);
+      data.append("audio", audioFile);
+
+      const response = await api.post("/songs", data, {
+        onUploadProgress: (progressEvent) => {
+          if (progressEvent.total) {
+            const progress = Math.round(
+              (progressEvent.loaded * 100) / progressEvent.total,
+            );
+
+            setUploadProgress(progress);
+          }
+        },
+      });
+
+      console.log("Uploaded song:", response.data);
+
+      addToast(
+        "success",
+        `"${response.data.title}" successfully upload ho gaya!`,
+      );
+
+      handleReset(false);
+
+      navigate("/", {
+        state: { refreshSongs: true },
+      });
     } catch (error) {
-      console.error(error);
+      console.error("Song upload error:", error);
 
-      toast.error("Upload Failed");
+      const message =
+        error.response?.data?.message ||
+        "Upload fail ho gaya, dobara try karein";
+
+      addToast("error", message);
     } finally {
       setLoading(false);
+      setUploadProgress(0);
     }
   };
 
+  // ---------------- Reset ----------------
+  const handleReset = (showToast = true) => {
+    setFormData({ title: "", artist: "", album: "" ,mood: "Happy"});
+    setImageFile(null);
+    setAudioFile(null);
+    setImagePreview(null);
+    setAudioPreview(null);
+    setErrors({});
+    if (showToast) addToast("success", "Form reset ho gaya");
+  };
+
   return (
-    <div className="min-h-screen bg-black px-4 py-6 text-white sm:px-6 md:p-10">
-      <motion.div
-        className="mx-auto max-w-2xl rounded-3xl border border-zinc-800 bg-zinc-900 p-5 sm:p-8 lg:p-10"
-        initial={{ opacity: 0, y: 40, scale: 0.98 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ duration: 0.6, ease: "easeOut" }}
-      >
-        <div className="mb-8 sm:mb-10">
-          <p className="mb-2 text-xs font-semibold uppercase tracking-[0.25em] text-purple-400 sm:text-sm">
-            Admin Panel
-          </p>
+    <div
+      ref={containerRef}
+      className="min-h-screen text-white px-4 sm:px-6 py-8 sm:py-12 relative overflow-hidden"
+      style={{
+        background:
+          "radial-gradient(circle at 15% 0%, rgba(139,92,246,0.18), transparent 45%), radial-gradient(circle at 85% 20%, rgba(236,72,153,0.14), transparent 40%), #08060d",
+      }}
+    >
+      {/* ---------------- Ambient glow blobs ---------------- */}
+      <div className="pointer-events-none absolute -top-32 -left-32 w-72 h-72 rounded-full bg-violet-600/25 blur-[100px]" />
+      <div className="pointer-events-none absolute top-40 -right-24 w-72 h-72 rounded-full bg-fuchsia-600/20 blur-[110px]" />
 
-          <h1 className="text-3xl font-extrabold sm:text-4xl lg:text-5xl">
-            Upload New Song
-          </h1>
+      {/* ---------------- Toast container ---------------- */}
+      <div className="fixed top-4 right-4 left-4 sm:left-auto z-50 flex flex-col gap-2 sm:w-80">
+        {toasts.map((t) => (
+          <div
+            key={t.id}
+            className={`flex items-start gap-2 rounded-xl px-4 py-3 shadow-lg border backdrop-blur-md animate-[fadeIn_0.25s_ease-out] ${
+              t.type === "success"
+                ? "bg-emerald-950/70 border-emerald-600/50 text-emerald-200"
+                : "bg-rose-950/70 border-rose-600/50 text-rose-200"
+            }`}
+          >
+            {t.type === "success" ? (
+              <CheckCircle2 size={18} className="mt-0.5 shrink-0" />
+            ) : (
+              <XCircle size={18} className="mt-0.5 shrink-0" />
+            )}
+            <p className="text-sm flex-1">{t.message}</p>
+            <button
+              onClick={() => dismissToast(t.id)}
+              className="opacity-60 hover:opacity-100"
+            >
+              <X size={14} />
+            </button>
+          </div>
+        ))}
+      </div>
 
-          <p className="mt-4 text-base leading-7 text-zinc-400 sm:text-lg sm:leading-8">
-            Add a new song to your AI-powered music library by filling in the
-            details below.
-          </p>
+      <div className="max-w-3xl mx-auto relative">
+        {/* ---------------- Hero header ---------------- */}
+        <div ref={heroRef} className="flex items-center gap-3 mb-8">
+          <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center shadow-[0_0_25px_rgba(168,85,247,0.5)]">
+            <Disc3 size={22} className="text-white" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2 text-[11px] font-semibold tracking-[0.2em] text-fuchsia-300/80 mb-1">
+              <Sparkles size={12} />
+              <span>ADMIN STUDIO</span>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold leading-tight">
+              Upload a{" "}
+              <span className="bg-gradient-to-r from-violet-400 via-fuchsia-400 to-pink-400 bg-clip-text text-transparent">
+                New Track
+              </span>
+            </h1>
+          </div>
         </div>
 
-        <form onSubmit={handleUpload} className="space-y-4 sm:space-y-5">
-          <motion.div
-            whileHover={{ scale: 1.01 }}
-            transition={{ duration: 0.2 }}
-          >
-            <Input
-              type="text"
-              placeholder="Song Title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="w-full rounded-2xl border border-zinc-700 bg-zinc-900/70 px-4 py-3 text-sm transition-all focus:border-purple-500 sm:px-5 sm:py-4 sm:text-base"
-            />
-          </motion.div>
+        {/* ---------------- Upload Form Card ---------------- */}
+        <form
+          ref={formCardRef}
+          onSubmit={handleSubmit}
+          className="rounded-3xl border border-white/10 bg-white/[0.03] backdrop-blur-xl p-5 sm:p-7 space-y-5 shadow-[0_8px_40px_rgba(0,0,0,0.35)]"
+        >
+          {errors.duplicate && (
+            <div className="flex items-center gap-2 bg-amber-500/10 border border-amber-500/40 text-amber-300 text-sm rounded-xl px-3.5 py-2.5">
+              <AlertTriangle size={16} className="shrink-0" />
+              {errors.duplicate}
+            </div>
+          )}
 
-          <motion.div
-            whileHover={{ scale: 1.01 }}
-            transition={{ duration: 0.2 }}
-          >
-            <Input
-              type="text"
-              placeholder="Artist Name"
-              value={artist}
-              onChange={(e) => setArtist(e.target.value)}
-              className="w-full rounded-2xl border border-zinc-700 bg-zinc-900/70 px-4 py-3 text-sm transition-all focus:border-purple-500 sm:px-5 sm:py-4 sm:text-base"
-            />
-          </motion.div>
+          <div className="grid sm:grid-cols-2 gap-4">
+            {/* Title */}
+            <div>
+              <label className="block text-xs font-semibold tracking-wide text-gray-400 mb-1.5 uppercase">
+                Song Title
+              </label>
+              <input
+                type="text"
+                name="title"
+                value={formData.title}
+                onChange={handleTextChange}
+                placeholder="e.g. Kesariya"
+                disabled={loading}
+                className={`w-full rounded-xl bg-black/40 border px-3.5 py-2.5 text-sm text-white placeholder-gray-600 outline-none transition focus:ring-2 focus:ring-fuchsia-500/40 focus:border-fuchsia-500/60 ${
+                  errors.title ? "border-rose-500/70" : "border-white/10"
+                }`}
+              />
+              {errors.title && (
+                <p className="text-rose-400 text-xs mt-1">{errors.title}</p>
+              )}
+            </div>
 
-          <motion.div
-            whileHover={{ scale: 1.01 }}
-            transition={{ duration: 0.2 }}
-          >
-            <MoodDropdown value={mood} onChange={setMood} />
-          </motion.div>
+            {/* Artist */}
+            <div>
+              <label className="block text-xs font-semibold tracking-wide text-gray-400 mb-1.5 uppercase">
+                Artist
+              </label>
+              <input
+                type="text"
+                name="artist"
+                value={formData.artist}
+                onChange={handleTextChange}
+                placeholder="e.g. Arijit Singh"
+                disabled={loading}
+                className={`w-full rounded-xl bg-black/40 border px-3.5 py-2.5 text-sm text-white placeholder-gray-600 outline-none transition focus:ring-2 focus:ring-fuchsia-500/40 focus:border-fuchsia-500/60 ${
+                  errors.artist ? "border-rose-500/70" : "border-white/10"
+                }`}
+              />
+              {errors.artist && (
+                <p className="text-rose-400 text-xs mt-1">{errors.artist}</p>
+              )}
+            </div>
+          </div>
+
+          {/* Album (optional) */}
+          <div>
+            <label className="block text-xs font-semibold tracking-wide text-gray-400 mb-1.5 uppercase">
+              Album{" "}
+              <span className="text-gray-600 normal-case font-normal">
+                (optional)
+              </span>
+            </label>
+            <input
+              type="text"
+              name="album"
+              value={formData.album}
+              onChange={handleTextChange}
+              placeholder="e.g. Brahmastra"
+              disabled={loading}
+              className="w-full rounded-xl bg-black/40 border border-white/10 px-3.5 py-2.5 text-sm text-white placeholder-gray-600 outline-none transition focus:ring-2 focus:ring-fuchsia-500/40 focus:border-fuchsia-500/60"
+            />
+          </div>
+
+          {/* Mood */}
 
           <div>
-            <p className="text-sm font-medium text-zinc-400 mb-3">
-              Album Cover
-            </p>
+            <label className="block text-xs font-semibold tracking-wide text-gray-400 mb-1.5 uppercase">
+              Mood
+            </label>
 
-            <label className="cursor-pointer">
-              <motion.div
-                whileHover={{ scale: 1.02 }}
-                transition={{ duration: 0.25 }}
-                className="flex flex-col items-center justify-center rounded-3xl border-2 border-dashed border-zinc-700 bg-zinc-900/50 p-5 transition-all duration-300 hover:border-purple-500 hover:shadow-xl hover:shadow-purple-500/20 sm:p-8"
+            <MoodDropdown
+              value={formData.mood}
+              onChange={(value) => {
+                setFormData((prev) => ({
+                  ...prev,
+                  mood: value,
+                }));
+
+                setErrors((prev) => ({
+                  ...prev,
+                  mood: null,
+                }));
+              }}
+              includeAll={false}
+            />
+          </div>
+
+          <div className="grid sm:grid-cols-2 gap-4">
+            {/* Image upload */}
+            <div>
+              <label className="block text-xs font-semibold tracking-wide text-gray-400 mb-1.5 uppercase">
+                Cover Image
+              </label>
+              <label
+                htmlFor="image-input"
+                className={`group flex flex-col items-center justify-center gap-2 h-36 rounded-2xl border-2 border-dashed cursor-pointer transition overflow-hidden bg-black/30 ${
+                  errors.image
+                    ? "border-rose-500/60"
+                    : "border-white/15 hover:border-fuchsia-400/60 hover:bg-fuchsia-500/[0.04]"
+                }`}
               >
-                <ImagePlus
-                  size={48}
-                  className="mb-4 text-purple-400 sm:size-14"
-                />
-
-                <p className="text-center text-base font-semibold sm:text-lg">
-                  Click to Upload Image
-                </p>
-
-                <p className="mt-2 text-center text-xs text-zinc-400 sm:text-sm">
-                  JPG, PNG or WEBP
-                </p>
-
-                {preview && (
-                  <motion.img
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.3 }}
-                    src={preview}
-                    alt="Preview"
-                    className="mt-6 h-32 w-32 rounded-2xl border border-purple-500/20 object-cover shadow-lg sm:h-40 sm:w-40"
-          
+                {imagePreview ? (
+                  <img
+                    src={imagePreview}
+                    alt="Cover preview"
+                    className="w-full h-full object-cover"
                   />
+                ) : (
+                  <>
+                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-violet-500/20 to-fuchsia-500/20 flex items-center justify-center group-hover:scale-110 transition">
+                      <ImageIcon size={18} className="text-fuchsia-300" />
+                    </div>
+                    <span className="text-xs text-gray-500">
+                      JPG / PNG / WEBP · max {MAX_IMAGE_SIZE_MB}MB
+                    </span>
+                  </>
                 )}
-
-                {image && (
-                  <motion.p
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="mt-4 break-all text-center text-sm font-medium text-green-400"
-                  >
-                    ✅ {image.name}
-                  </motion.p>
-                )}
-              </motion.div>
-
+              </label>
               <input
+                id="image-input"
                 type="file"
-                accept="image/*"
+                accept={ACCEPTED_IMAGE_TYPES.join(",")}
+                onChange={handleImageChange}
+                disabled={loading}
                 className="hidden"
-                onChange={(e) => {
-                  const file = e.target.files[0];
-
-                  if (!file) return;
-
-                  setImage(file);
-
-                  setPreview(URL.createObjectURL(file));
-                }}
               />
-            </label>
-          </div>
+              {errors.image && (
+                <p className="text-rose-400 text-xs mt-1">{errors.image}</p>
+              )}
+            </div>
 
-          <div>
-            <p className="text-sm font-medium text-zinc-400 mb-3">Audio File</p>
-
-            <label className="cursor-pointer">
-              <motion.div
-                whileHover={{ scale: 1.02 }}
-                transition={{ duration: 0.25 }}
-                className="flex flex-col items-center justify-center rounded-3xl border-2 border-dashed border-zinc-700 bg-zinc-900/50 p-5 transition-all duration-300 hover:border-pink-500 sm:p-8"
+            {/* Audio upload */}
+            <div>
+              <label className="block text-xs font-semibold tracking-wide text-gray-400 mb-1.5 uppercase">
+                Audio File
+              </label>
+              <label
+                htmlFor="audio-input"
+                className={`group flex flex-col items-center justify-center gap-2 h-36 rounded-2xl border-2 border-dashed cursor-pointer transition px-3 text-center bg-black/30 ${
+                  errors.audio
+                    ? "border-rose-500/60"
+                    : "border-white/15 hover:border-fuchsia-400/60 hover:bg-fuchsia-500/[0.04]"
+                }`}
               >
-                <Music4 size={48} className="mb-4 text-pink-400 sm:size-14" />
-
-                <p className="text-center text-base font-semibold sm:text-lg">
-                  Click to Upload Audio
-                </p>
-
-                <p className="mt-2 text-center text-xs text-zinc-400 sm:text-sm">
-                  MP3, WAV
-                </p>
-
-                {audio && (
-                  <motion.p
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="mt-4 break-all text-center text-sm font-medium text-green-400"
-                  >
-                    ✅ {audio.name}
-                  </motion.p>
-                )}
-              </motion.div>
-
+                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-violet-500/20 to-fuchsia-500/20 flex items-center justify-center group-hover:scale-110 transition">
+                  <Music2
+                    size={18}
+                    className={
+                      audioFile ? "text-fuchsia-300" : "text-fuchsia-300/70"
+                    }
+                  />
+                </div>
+                <span className="text-xs text-gray-500 truncate max-w-full">
+                  {audioFile
+                    ? audioFile.name
+                    : `MP3 / WAV / OGG · max ${MAX_AUDIO_SIZE_MB}MB`}
+                </span>
+              </label>
               <input
+                id="audio-input"
                 type="file"
-                accept="audio/*"
+                accept={ACCEPTED_AUDIO_TYPES.join(",")}
+                onChange={handleAudioChange}
+                disabled={loading}
                 className="hidden"
-                onChange={(e) => setAudio(e.target.files[0])}
               />
-            </label>
+              {errors.audio && (
+                <p className="text-rose-400 text-xs mt-1">{errors.audio}</p>
+              )}
+            </div>
           </div>
 
-          <motion.button
-            type="submit"
-            disabled={loading}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.97 }}
-            className="mt-4 flex w-full items-center justify-center gap-3 rounded-2xl bg-gradient-to-r from-purple-600 to-pink-500 py-3 text-sm font-semibold shadow-xl shadow-purple-500/20 transition-all disabled:opacity-60 sm:py-4 sm:text-base"
-          >
-            {loading ? (
-              <>
-                <Loader2 size={20} className="animate-spin" />
-                Uploading...
-              </>
-            ) : (
-              <>
-                <UploadCloud size={20} />
-                Upload Song
-              </>
-            )}
-          </motion.button>
+          {/* Audio preview player */}
+          {audioPreview && (
+            <audio
+              controls
+              src={audioPreview}
+              className="w-full h-10 accent-fuchsia-500"
+            >
+              Your browser audio support nahi karta.
+            </audio>
+          )}
+
+          {/* Upload progress */}
+          {loading && (
+            <div>
+              <div className="flex justify-between text-xs text-gray-400 mb-1.5">
+                <span>Uploading...</span>
+                <span className="text-fuchsia-300 font-medium">
+                  {uploadProgress}%
+                </span>
+              </div>
+              <div className="w-full h-2 rounded-full bg-white/10 overflow-hidden">
+                <div
+                  ref={progressBarRef}
+                  className="h-full rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500"
+                  style={{ width: "0%" }}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Actions */}
+          <div className="flex flex-col sm:flex-row gap-3 pt-2">
+            <button
+              type="submit"
+              disabled={loading}
+              className="flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 disabled:opacity-60 disabled:cursor-not-allowed transition rounded-full py-3 text-sm font-semibold shadow-[0_0_25px_rgba(217,70,239,0.35)]"
+            >
+              {loading ? (
+                <>
+                  <Loader2 size={16} className="animate-spin" /> Uploading...
+                </>
+              ) : (
+                <>
+                  <UploadCloud size={16} /> Upload Song
+                </>
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={() => handleReset(true)}
+              disabled={loading}
+              className="flex items-center justify-center gap-2 border border-white/15 hover:border-white/30 hover:bg-white/5 disabled:opacity-60 transition rounded-full px-5 py-3 text-sm font-medium text-gray-300"
+            >
+              <RotateCcw size={16} /> Reset
+            </button>
+          </div>
         </form>
-      </motion.div>
+
+        {/* ---------------- Recently Uploaded Songs (Admin Table) ---------------- */}
+        <div ref={tableRef} className="mt-8">
+          <div className="flex items-center gap-2 text-[11px] font-semibold tracking-[0.2em] text-fuchsia-300/80 mb-2">
+            <Sparkles size={12} />
+            <span>LIBRARY</span>
+          </div>
+          <h2 className="text-lg font-bold mb-4">Recently Uploaded</h2>
+
+          {recentUploads.length === 0 ? (
+            <div className="rounded-2xl border border-white/10 bg-white/[0.02] px-4 py-10 text-center">
+              <Disc3 size={26} className="mx-auto text-gray-600 mb-2" />
+              <p className="text-gray-500 text-sm">
+                No songs uploaded till now
+              </p>
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-xl overflow-hidden">
+              {/* Desktop table */}
+              <div className="hidden sm:block overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="text-gray-500 border-b border-white/10">
+                    <tr>
+                      <th className="text-left font-medium px-5 py-3 text-xs uppercase tracking-wide">
+                        Cover
+                      </th>
+                      <th className="text-left font-medium px-5 py-3 text-xs uppercase tracking-wide">
+                        Title
+                      </th>
+                      <th className="text-left font-medium px-5 py-3 text-xs uppercase tracking-wide">
+                        Artist
+                      </th>
+                      <th className="text-left font-medium px-5 py-3 text-xs uppercase tracking-wide">
+                        Album
+                      </th>
+                      <th className="text-left font-medium px-5 py-3 text-xs uppercase tracking-wide">
+                        Uploaded
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {recentUploads.map((song) => (
+                      <tr
+                        key={song.id}
+                        className="border-t border-white/5 hover:bg-white/[0.03] transition"
+                      >
+                        <td className="px-5 py-3">
+                          {song.imagePreview ? (
+                            <img
+                              src={song.imagePreview}
+                              alt={song.title}
+                              className="w-10 h-10 rounded-lg object-cover"
+                            />
+                          ) : (
+                            <div className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center">
+                              <Music2 size={14} className="text-gray-600" />
+                            </div>
+                          )}
+                        </td>
+                        <td className="px-5 py-3 font-medium text-white">
+                          {song.title}
+                        </td>
+                        <td className="px-5 py-3 text-gray-400">
+                          {song.artist}
+                        </td>
+                        <td className="px-5 py-3 text-gray-400">
+                          {song.album}
+                        </td>
+                        <td className="px-5 py-3 text-gray-500 text-xs whitespace-nowrap">
+                          {song.uploadedAt}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Mobile stacked cards */}
+              <div className="sm:hidden divide-y divide-white/5">
+                {recentUploads.map((song) => (
+                  <div
+                    key={song.id}
+                    className="flex items-center gap-3 px-4 py-3"
+                  >
+                    {song.imagePreview ? (
+                      <img
+                        src={song.imagePreview}
+                        alt={song.title}
+                        className="w-11 h-11 rounded-lg object-cover shrink-0"
+                      />
+                    ) : (
+                      <div className="w-11 h-11 rounded-lg bg-white/5 flex items-center justify-center shrink-0">
+                        <Music2 size={16} className="text-gray-600" />
+                      </div>
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-white truncate">
+                        {song.title}
+                      </p>
+                      <p className="text-gray-400 text-xs truncate">
+                        {song.artist} · {song.album}
+                      </p>
+                    </div>
+                    <span className="text-gray-500 text-[11px] whitespace-nowrap shrink-0">
+                      {song.uploadedAt}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
-};
-
-export default UploadSong;
+}

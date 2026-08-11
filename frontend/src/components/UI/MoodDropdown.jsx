@@ -11,10 +11,14 @@ const moods = [
   { label: "Surprised", emoji: "😲" },
 ];
 
-const MoodDropdown = ({ value, onChange }) => {
+const MoodDropdown = ({ value, onChange, includeAll = true }) => {
   const [open, setOpen] = useState(false);
 
   const dropdownRef = useRef(null);
+
+  const availableMoods = includeAll
+    ? moods
+    : moods.filter((mood) => mood.label !== "All");
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -28,20 +32,20 @@ const MoodDropdown = ({ value, onChange }) => {
 
     document.addEventListener("mousedown", handleClickOutside);
 
-    return () =>
-      document.removeEventListener(
-        "mousedown",
-        handleClickOutside
-      );
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
   }, []);
 
   const selectedMood =
     moods.find((mood) => mood.label === value) || moods[0];
 
   return (
-    <div className="relative w-52" ref={dropdownRef}>
+    <div ref={dropdownRef} className="relative w-full">
+      {/* Main Dropdown Button */}
 
       <button
+        type="button"
         onClick={() => setOpen(!open)}
         className="w-full flex items-center justify-between px-5 py-4 rounded-2xl bg-zinc-900/70 border border-zinc-700 hover:border-purple-500 transition-all"
       >
@@ -57,13 +61,17 @@ const MoodDropdown = ({ value, onChange }) => {
           animate={{
             rotate: open ? 180 : 0,
           }}
+          transition={{
+            duration: 0.2,
+          }}
         >
           <ChevronDown size={18} />
         </motion.div>
       </button>
 
-      <AnimatePresence>
+      {/* Dropdown Options */}
 
+      <AnimatePresence>
         {open && (
           <motion.div
             initial={{
@@ -84,10 +92,11 @@ const MoodDropdown = ({ value, onChange }) => {
             transition={{
               duration: 0.2,
             }}
-            className="absolute mt-3 w-full rounded-2xl border border-zinc-700 bg-zinc-900 shadow-2xl overflow-hidden z-50"
+            className="absolute left-0 mt-3 w-full rounded-2xl border border-zinc-700 bg-zinc-900 shadow-2xl overflow-hidden z-50"
           >
-            {moods.map((mood) => (
+            {availableMoods.map((mood) => (
               <button
+                type="button"
                 key={mood.label}
                 onClick={() => {
                   onChange(mood.label);
@@ -112,7 +121,6 @@ const MoodDropdown = ({ value, onChange }) => {
             ))}
           </motion.div>
         )}
-
       </AnimatePresence>
     </div>
   );

@@ -1,140 +1,191 @@
-import { useEffect, useRef } from "react"
+import { useEffect, useRef } from "react";
+import * as faceapi from "face-api.js";
+import * as tf from "@tensorflow/tfjs";
 
-import * as faceapi from "face-api.js"
+const FacialExpression = ({ setMood, startDetection }) => {
+  const videoRef = useRef(null);
 
-import * as tf from "@tensorflow/tfjs"
+  // Camera stream ko store karenge
+  const streamRef = useRef(null);
 
-const FacialExpression = ({
-  setMood,
-  startDetection
-}) => {
+  // Detection interval ko store karenge
+  const intervalRef = useRef(null);
 
-  // VIDEO REFERENCE
+  // Models ko baar-baar load hone se bachayega
+  const modelsLoadedRef = useRef(false);
 
-  const videoRef = useRef()
-
-  // START CAMERA
-
-  const startVideo = async () => {
-
-    try {
-
-      const stream =
-        await navigator.mediaDevices.getUserMedia({
-          video: true
-        })
-
-      videoRef.current.srcObject = stream
-
-    } catch (error) {
-
-      console.log(error)
-    }
-  }
-
+  // -----------------------------
   // LOAD MODELS
+  // -----------------------------
 
   const loadModels = async () => {
+    if (modelsLoadedRef.current) return;
 
-    await faceapi.nets.tinyFaceDetector.loadFromUri("/models")
+    await tf.ready();
 
-    await faceapi.nets.faceExpressionNet.loadFromUri("/models")
+    console.log("TensorFlow Ready");
 
-    console.log("Models Loaded")
-  }
+    await faceapi.nets.tinyFaceDetector.loadFromUri("/models");
+    await faceapi.nets.faceExpressionNet.loadFromUri("/models");
 
-  // DETECT MOOD
+    modelsLoadedRef.current = true;
 
-  const detectMood = () => {
+    console.log("Models Loaded");
+  };
 
-    const interval = setInterval(async () => {
+  // -----------------------------
+  // START CAMERA
+  // -----------------------------
 
-      if (!videoRef.current) return
+  const startVideo = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: true,
+      });
 
-      const detections =
-        await faceapi
+      streamRef.current = stream;
+
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
+    } catch (error) {
+      console.error("Camera error:", error);
+    }
+  };
+
+  // -----------------------------
+  // STOP CAMERA
+  // -----------------------------
+
+  const stopVideo = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => {
+        track.stop();
+      });
+
+      streamRef.current = null;
+    }
+
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+
+    console.log("Camera stopped");
+  };
+
+  // -----------------------------
+  // START MOOD DETECTION
+  // -----------------------------
+
+  const startMoodDetection = () => {
+    // Agar pehle se interval chal raha hai
+    // toh doosra interval create nahi karna
+    if (intervalRef.current) return;
+
+    intervalRef.current = setInterval(async () => {
+      if (!videoRef.current) return;
+
+      // Video ready nahi hai
+      if (videoRef.current.readyState < 2) return;
+
+      try {
+        const detections = await faceapi
           .detectSingleFace(
             videoRef.current,
             new faceapi.TinyFaceDetectorOptions({
               inputSize: 512,
-              scoreThreshold: 0.5
-            })
+              scoreThreshold: 0.5,
+            }),
           )
-          .withFaceExpressions()
+          .withFaceExpressions();
 
-      console.log(detections)
+        if (!detections) return;
 
-      if (detections) {
+        const expressions = detections.expressions;
 
-        const expressions =
-          detections.expressions
-
-        let maxExpression = "neutral"
-
-        let maxValue = 0
+        let maxExpression = "neutral";
+        let maxValue = 0;
 
         for (const expression in expressions) {
-
           if (expressions[expression] > maxValue) {
-
-            maxValue = expressions[expression]
-
-            maxExpression = expression
+            maxValue = expressions[expression];
+            maxExpression = expression;
           }
         }
 
-        // CONFIDENCE CHECK
-
+        // Confidence check
         if (maxValue > 0.6) {
-
-          setMood(maxExpression)
+          setMood(maxExpression);
         }
+      } catch (error) {
+        console.error("Mood detection error:", error);
       }
+    }, 700);
+  };
 
-    }, 700)
+  // -----------------------------
+  // STOP MOOD DETECTION
+  // -----------------------------
 
-    return () => clearInterval(interval)
-  }
+  const stopMoodDetection = () => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
 
-  // START EVERYTHING ONLY WHEN BUTTON CLICKED
+    console.log("Mood detection stopped");
+  };
+
+  // -----------------------------
+  // MAIN EFFECT
+  // -----------------------------
 
   useEffect(() => {
+    let cancelled = false;
 
-    if (!startDetection) return
+    const startEverything = async () => {
+      try {
+        await loadModels();
 
-    let cleanup
+        if (cancelled || !startDetection) return;
 
-    const loadEverything = async () => {
+        await startVideo();
 
-      await tf.ready()
+        if (cancelled || !videoRef.current) return;
 
-      console.log("TensorFlow Ready")
+        videoRef.current.onloadedmetadata = () => {
+          if (cancelled) return;
 
-      await loadModels()
-
-      await startVideo()
-
-      videoRef.current.onloadedmetadata = () => {
-
-        cleanup = detectMood()
+          startMoodDetection();
+        };
+      } catch (error) {
+        console.error("Failed to start mood detection:", error);
       }
-    }
+    };
 
-    loadEverything()
+    if (startDetection) {
+      startEverything();
+    } else {
+      // startDetection false hone par
+      // detection + camera dono stop
+      stopMoodDetection();
+      stopVideo();
+    }
 
     return () => {
+      cancelled = true;
 
-      if (cleanup) cleanup()
-    }
+      stopMoodDetection();
+      stopVideo();
 
-  }, [startDetection])
+      if (videoRef.current) {
+        videoRef.current.onloadedmetadata = null;
+      }
+    };
+  }, [startDetection]);
 
   return (
-
     <div className="flex flex-col items-center gap-5">
-
-      {/* VIDEO */}
-
       <video
         ref={videoRef}
         autoPlay
@@ -142,9 +193,8 @@ const FacialExpression = ({
         playsInline
         className="w-[650px] rounded-3xl border-4 border-purple-500"
       />
-
     </div>
-  )
-}
+  );
+};
 
-export default FacialExpression
+export default FacialExpression;

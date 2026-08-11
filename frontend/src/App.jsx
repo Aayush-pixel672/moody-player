@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
-import { useState } from "react";
+
 
 import Home from "./pages/Home";
 import Favorites from "./pages/Favorites";
@@ -18,20 +18,17 @@ import AdminDashboard from "./pages/AdminDashboard";
 
 import { Toaster } from "react-hot-toast";
 
- 
+import Playlists from "./pages/Playlists";
+
+import PlaylistDetails from "./pages/PlaylistDetails";
 
 const App = () => {
-  const [currentSong, setCurrentSong] = useState(null);
+  
 
   return (
     <BrowserRouter>
       <Routes>
-        <Route
-          path="/"
-          element={
-            <Home currentSong={currentSong} setCurrentSong={setCurrentSong} />
-          }
-        />
+        <Route path="/" element={<Home />} />
 
         <Route path="/login" element={<Login />} />
 
@@ -50,7 +47,23 @@ const App = () => {
           path="/history"
           element={
             <ProtectedRoutes>
-              <History setCurrentSong={setCurrentSong} />
+              <History />
+            </ProtectedRoutes>
+          }
+        />
+        <Route
+          path="/playlists"
+          element={
+            <ProtectedRoutes>
+              <Playlists />
+            </ProtectedRoutes>
+          }
+        />
+        <Route
+          path="/playlists/:id"
+          element={
+            <ProtectedRoutes>
+              <PlaylistDetails />
             </ProtectedRoutes>
           }
         />

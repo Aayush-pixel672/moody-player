@@ -12,16 +12,22 @@ import { useRef } from "react";
 import { animateHero, animateStatsCards, fadeOnScroll } from "../animations";
 import { useGSAP } from "@gsap/react";
 
-const Home = ({ currentSong, setCurrentSong }) => {
+import { useLocation } from "react-router-dom";
+
+import { useMusic } from "../context/MusicContext";
+
+const Home = () => {
+  const { currentSong, setCurrentSong, isPlaying, setIsPlaying } = useMusic();
+  const location = useLocation();
   const [mood, setMood] = useState("Detecting...");
 
-  const [startDetection, setStartDetection] = useState(false);
+  const [startDetection, setStartDetection] = useState(() => {
+    return sessionStorage.getItem("moodDetection") === "true";
+  });
 
   const [songs, setSongs] = useState([]);
 
   const [favorites, setFavorites] = useState([]);
-
-  const [isPlaying, setIsPlaying] = useState(false);
 
   const heroLeftRef = useRef(null);
 
@@ -41,30 +47,39 @@ const Home = ({ currentSong, setCurrentSong }) => {
 
   const emoji = moodEmoji[mood.toLowerCase()] || "🎵";
 
-  useEffect(() => {
-    const fetchSongs = async () => {
-      try {
-        const response = await api.get("/songs");
-        setSongs(response.data);
-        const savedSong = localStorage.getItem("lastPlayedSong");
+  const fetchSongs = async () => {
+    try {
+      const response = await api.get("/songs");
 
-        if (savedSong) {
-          const parsedSong = JSON.parse(savedSong);
+      setSongs(response.data);
 
-          const song = response.data.find(
-            (item) => item._id === parsedSong._id,
-          );
+      const savedSong = localStorage.getItem("lastPlayedSong");
 
-          if (song) {
-            setCurrentSong(song);
-          }
+      if (savedSong) {
+        const parsedSong = JSON.parse(savedSong);
+
+        const song = response.data.find((item) => item._id === parsedSong._id);
+
+        if (song) {
+          setCurrentSong(song);
         }
-      } catch (error) {
-        console.error("Error fetching songs:", error);
       }
-    };
+    } catch (error) {
+      console.error("Error fetching songs:", error);
+    }
+  };
+
+  useEffect(() => {
     fetchSongs();
   }, []);
+
+  useEffect(() => {
+    if (location.state?.refreshSongs) {
+      fetchSongs();
+
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   useEffect(() => {
     const fetchFavorites = async () => {
@@ -77,6 +92,14 @@ const Home = ({ currentSong, setCurrentSong }) => {
     };
     fetchFavorites();
   }, []);
+
+  useEffect(() => {
+    if (startDetection) {
+      sessionStorage.setItem("moodDetection", "true");
+    } else {
+      sessionStorage.removeItem("moodDetection");
+    }
+  }, [startDetection]);
 
   useGSAP(() => {
     animateHero({
@@ -220,17 +243,12 @@ const Home = ({ currentSong, setCurrentSong }) => {
           currentSong={currentSong}
           mood={mood}
           isPlaying={isPlaying}
+          setStartDetection={setStartDetection}
         />
       </div>
       {/* MUSIC PLAYER */}
 
-      <MusicPlayer
-        currentSong={currentSong}
-        setCurrentSong={setCurrentSong}
-        songsData={songs}
-        isPlaying={isPlaying}
-        setIsPlaying={setIsPlaying}
-      />
+      <MusicPlayer songsData={songs} />
     </div>
   );
 };
