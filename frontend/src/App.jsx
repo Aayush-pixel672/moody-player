@@ -7,7 +7,7 @@ import Favorites from "./pages/Favorites";
 import History from "./pages/History";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
-
+import MusicPlayer from "./components/MusicPlayer";
 import UploadSong from "./pages/UploadSong";
 
 import ProtectedRoutes from "./components/ProtectedRoutes";
@@ -84,6 +84,7 @@ const App = () => {
           }
         />
       </Routes>
+      <MusicPlayer />
       <Toaster
         position="top-right"
         reverseOrder={false}

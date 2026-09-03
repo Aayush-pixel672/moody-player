@@ -8,7 +8,8 @@ import { useGSAP } from "@gsap/react";
 import { useRef, useMemo } from "react";
 gsap.registerPlugin(useGSAP);
 const Favorites = () => {
-  const { setCurrentSong, setIsPlaying } = useMusic();
+  const { setCurrentSong, setIsPlaying, setQueue, setCurrentIndex } =
+    useMusic();
   const [favorites, setFavorites] = useState([]);
   const container = useRef(null);
 
@@ -80,13 +81,28 @@ const Favorites = () => {
   const removeFavorite = async (favoriteId) => {
     try {
       await api.delete(`/favorites/${favoriteId}`);
-      setFavorites(favorites.filter((favorite) => favorite._id !== favoriteId));
+
+      setFavorites((prev) =>
+        prev.filter((favorite) => favorite._id !== favoriteId),
+      );
     } catch (error) {
       console.error("Error removing favorite:", error);
     }
   };
 
   const playSong = (song) => {
+    const favoriteSongs = filteredFavorites
+      .map((favorite) => favorite.songId)
+      .filter(Boolean);
+
+    const songIndex = favoriteSongs.findIndex(
+      (favoriteSong) => favoriteSong._id === song._id,
+    );
+
+    if (songIndex === -1) return;
+
+    setQueue(favoriteSongs);
+    setCurrentIndex(songIndex);
     setCurrentSong(song);
     setIsPlaying(true);
   };
@@ -157,12 +173,32 @@ const Favorites = () => {
         {/* Buttons */}
 
         <div className="flex gap-3">
-          <Button variant="primary" className="flex items-center gap-2">
+          <Button
+            variant="primary"
+            className="flex items-center gap-2"
+            onClick={() => {
+              if (filteredFavorites.length === 0) return;
+
+              playSong(filteredFavorites[0].songId);
+            }}
+          >
             <Play size={18} />
             Play All
           </Button>
 
-          <Button variant="secondary" className="flex items-center gap-2">
+          <Button
+            variant="secondary"
+            className="flex items-center gap-2"
+            onClick={() => {
+              if (filteredFavorites.length === 0) return;
+
+              const randomIndex = Math.floor(
+                Math.random() * filteredFavorites.length,
+              );
+
+              playSong(filteredFavorites[randomIndex].songId);
+            }}
+          >
             <Shuffle size={18} />
             Shuffle
           </Button>
@@ -244,8 +280,6 @@ const Favorites = () => {
           ))}
         </div>
       )}
-
-      
     </div>
   );
 };

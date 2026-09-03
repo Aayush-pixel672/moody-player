@@ -12,15 +12,17 @@ import { useEffect, useRef, useState } from "react";
 import api from "../services/api";
 import { gsap } from "gsap";
 import { useMusic } from "../context/MusicContext";
-const MusicPlayer = ({
-  songsData
-}) => {
+const MusicPlayer = () => {
   const {
-  currentSong,
-  setCurrentSong,
-  isPlaying,
-  setIsPlaying,
-} = useMusic();
+    currentSong,
+    setCurrentSong,
+    isPlaying,
+    setIsPlaying,
+    songs,
+    queue,
+    currentIndex,
+    setCurrentIndex,
+  } = useMusic();
   const audioRef = useRef(null);
   const albumArtRef = useRef(null);
   const rotationTweenRef = useRef(null);
@@ -40,7 +42,7 @@ const MusicPlayer = ({
   });
 
   const playNextSong = () => {
-    if (!currentSong || songsData.length === 0) return;
+    if (!currentSong) return;
 
     // Repeat Mode
     if (isRepeat) {
@@ -51,27 +53,49 @@ const MusicPlayer = ({
       return;
     }
 
-    // Shuffle Mode
+    // Agar queue available hai
+    if (queue.length > 0) {
+      if (isShuffle) {
+        let randomIndex;
+
+        do {
+          randomIndex = Math.floor(Math.random() * queue.length);
+        } while (
+          queue.length > 1 &&
+          queue[randomIndex]._id === currentSong._id
+        );
+
+        setCurrentIndex(randomIndex);
+        setCurrentSong(queue[randomIndex]);
+        return;
+      }
+
+      const nextIndex = (currentIndex + 1) % queue.length;
+
+      setCurrentIndex(nextIndex);
+      setCurrentSong(queue[nextIndex]);
+      return;
+    }
+
+    // Fallback: Global songs
+    if (songs.length === 0) return;
+
     if (isShuffle) {
       let randomIndex;
 
       do {
-        randomIndex = Math.floor(Math.random() * songsData.length);
-      } while (
-        songsData.length > 1 &&
-        songsData[randomIndex]._id === currentSong._id
-      );
+        randomIndex = Math.floor(Math.random() * songs.length);
+      } while (songs.length > 1 && songs[randomIndex]._id === currentSong._id);
 
-      setCurrentSong(songsData[randomIndex]);
+      setCurrentSong(songs[randomIndex]);
       return;
     }
 
-    // Normal Mode
-    const currentIndex = songsData.findIndex(
-      (song) => song._id === currentSong._id,
-    );
+    const songIndex = songs.findIndex((song) => song._id === currentSong._id);
 
-    const nextSong = songsData[(currentIndex + 1) % songsData.length];
+    if (songIndex === -1) return;
+
+    const nextSong = songs[(songIndex + 1) % songs.length];
 
     setCurrentSong(nextSong);
   };
@@ -79,16 +103,27 @@ const MusicPlayer = ({
   const playPreviousSong = () => {
     if (!currentSong) return;
 
-    const currentIndex = songsData.findIndex(
-      (song) => song._id === currentSong._id,
-    );
+    // Agar queue available hai
+    if (queue.length > 0) {
+      const previousIndex = (currentIndex - 1 + queue.length) % queue.length;
 
-    const previousSong =
-      songsData[(currentIndex - 1 + songsData.length) % songsData.length];
+      setCurrentIndex(previousIndex);
+      setCurrentSong(queue[previousIndex]);
+      return;
+    }
+
+    // Fallback: Global songs
+    if (songs.length === 0) return;
+
+    const songIndex = songs.findIndex((song) => song._id === currentSong._id);
+
+    if (songIndex === -1) return;
+
+    const previousSong = songs[(songIndex - 1 + songs.length) % songs.length];
 
     setCurrentSong(previousSong);
   };
-
+  
   // AUTO PLAY
 
   useEffect(() => {
@@ -253,15 +288,20 @@ const MusicPlayer = ({
 
   // PLAY / PAUSE
 
-  const togglePlay = () => {
-    if (!audioRef.current) return;
+  const togglePlay = async () => {
+    if (!audioRef.current || !currentSong) return;
 
-    if (isPlaying) {
-      audioRef.current.pause();
+    try {
+      if (isPlaying) {
+        audioRef.current.pause();
+        setIsPlaying(false);
+      } else {
+        await audioRef.current.play();
+        setIsPlaying(true);
+      }
+    } catch (error) {
+      console.error("Play Error:", error);
       setIsPlaying(false);
-    } else {
-      audioRef.current.play();
-      setIsPlaying(true);
     }
   };
 
@@ -493,7 +533,15 @@ const MusicPlayer = ({
 
       {/* AUDIO */}
 
-      <audio ref={audioRef} src={currentSong?.audio} onEnded={playNextSong} />
+      <audio
+        ref={audioRef}
+        src={currentSong?.audio}
+        onEnded={playNextSong}
+        onError={() => {
+          console.error("Audio failed to load:", currentSong?.audio);
+          setIsPlaying(false);
+        }}
+      />
     </div>
   );
 };

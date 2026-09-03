@@ -22,11 +22,6 @@ import MoodDropdown from "../components/UI/MoodDropdown";
 // Mock "already uploaded" songs — duplicate check isse compare karega.
 // Real app mein ye API se aayega (GET /songs).
 // ----------------------------------------------------------------
-const MOCK_EXISTING_SONGS = [
-  { title: "Kesariya", artist: "Arijit Singh" },
-  { title: "Tum Hi Ho", artist: "Arijit Singh" },
-  { title: "Blinding Lights", artist: "The Weeknd" },
-];
 
 const MAX_IMAGE_SIZE_MB = 5;
 const MAX_AUDIO_SIZE_MB = 25;
@@ -69,6 +64,8 @@ export default function UploadSong() {
   const formCardRef = useRef(null);
   const tableRef = useRef(null);
   const progressBarRef = useRef(null);
+  const imageInputRef = useRef(null);
+  const audioInputRef = useRef(null);
 
   // ---------------- Entrance animation ----------------
   useEffect(() => {
@@ -131,19 +128,23 @@ export default function UploadSong() {
     if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
       setErrors((prev) => ({
         ...prev,
-        image: "Sirf JPG, PNG ya WEBP allowed hai",
+        image: "Only JPG, PNG, or WEBP files are allowed",
       }));
       return;
     }
     if (file.size > MAX_IMAGE_SIZE_MB * 1024 * 1024) {
       setErrors((prev) => ({
         ...prev,
-        image: `Image size ${MAX_IMAGE_SIZE_MB}MB se kam honi chahiye`,
+        image: `Image size must be less than ${MAX_IMAGE_SIZE_MB}MB`,
       }));
       return;
     }
 
     setErrors((prev) => ({ ...prev, image: null }));
+    if (imagePreview) {
+      URL.revokeObjectURL(imagePreview);
+    }
+
     setImageFile(file);
     setImagePreview(URL.createObjectURL(file));
   };
@@ -156,54 +157,83 @@ export default function UploadSong() {
     if (!ACCEPTED_AUDIO_TYPES.includes(file.type)) {
       setErrors((prev) => ({
         ...prev,
-        audio: "Sirf MP3, WAV ya OGG allowed hai",
+        audio: "Only MP3, WAV, or OGG files are allowed",
       }));
       return;
     }
     if (file.size > MAX_AUDIO_SIZE_MB * 1024 * 1024) {
       setErrors((prev) => ({
         ...prev,
-        audio: `Audio size ${MAX_AUDIO_SIZE_MB}MB se kam honi chahiye`,
+        audio: `Audio size must be less than ${MAX_AUDIO_SIZE_MB}MB`,
       }));
       return;
     }
 
     setErrors((prev) => ({ ...prev, audio: null }));
+    if (audioPreview) {
+      URL.revokeObjectURL(audioPreview);
+    }
+
     setAudioFile(file);
     setAudioPreview(URL.createObjectURL(file));
   };
 
   // ---------------- Validation ----------------
-  const validate = () => {
+  const validate = async () => {
     const newErrors = {};
-    if (!formData.title.trim()) newErrors.title = "Song title zaroori hai";
-    if (!formData.artist.trim()) newErrors.artist = "Artist name zaroori hai";
-    if (!imageFile) newErrors.image = "Cover image zaroori hai";
-    if (!audioFile) newErrors.audio = "Audio file zaroori hai";
 
-    // Duplicate check — mock list + jo already recentUploads mein hai
-    const allSongs = [...MOCK_EXISTING_SONGS, ...recentUploads];
-    const isDuplicate = allSongs.some(
-      (s) =>
-        normalize(s.title) === normalize(formData.title) &&
-        normalize(s.artist) === normalize(formData.artist),
-    );
-    if (isDuplicate && formData.title && formData.artist) {
-      newErrors.duplicate =
-        "Ye song already upload ho chuka hai (same title + artist)";
+    if (!formData.title.trim()) {
+      newErrors.title = "Song title is required";
+    }
+
+    if (!formData.artist.trim()) {
+      newErrors.artist = "Artist name is required";
+    }
+
+    if (!imageFile) {
+      newErrors.image = "Cover image is required";
+    }
+
+    if (!audioFile) {
+      newErrors.audio = "Audio file is required";
+    }
+
+    // Duplicate check from actual database
+    if (formData.title.trim() && formData.artist.trim()) {
+      try {
+        const response = await api.get("/songs");
+
+        const songs = response.data || [];
+
+        const isDuplicate = songs.some(
+          (song) =>
+            normalize(song.title || "") === normalize(formData.title) &&
+            normalize(song.artist || "") === normalize(formData.artist),
+        );
+
+        if (isDuplicate) {
+          newErrors.duplicate =
+            "This song has already been uploaded (same title + artist)";
+        }
+      } catch (error) {
+        console.error("Failed to check existing songs:", error);
+
+        newErrors.duplicateCheck =
+          "Unable to verify existing songs. Please try again.";
+      }
     }
 
     setErrors(newErrors);
+
     return Object.keys(newErrors).length === 0;
   };
-
   // ---------------- Simulated upload (replace with real API) ----------------
 
   // ---------------- Submit ----------------
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!validate()) {
+    if (!(await validate())) {
       gsap.fromTo(
         formCardRef.current,
         { x: -8 },
@@ -214,7 +244,7 @@ export default function UploadSong() {
         },
       );
 
-      addToast("error", "Form mein kuch errors hain, please check karein");
+      addToast("error", "There are errors in the form. Please check them.");
 
       return;
     }
@@ -249,11 +279,21 @@ export default function UploadSong() {
 
       console.log("Uploaded song:", response.data);
 
-      addToast(
-        "success",
-        `"${response.data.title}" successfully upload ho gaya!`,
-      );
-
+      addToast("success", `"${response.data.title}" uploaded successfully"`);
+      setRecentUploads((prev) => [
+        {
+          id: response.data._id,
+          title: response.data.title,
+          artist: response.data.artist,
+          album: response.data.album || formData.album || "—",
+          imagePreview: response.data.image,
+          uploadedAt: new Date().toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+        },
+        ...prev,
+      ]);
       handleReset(false);
 
       navigate("/", {
@@ -263,8 +303,7 @@ export default function UploadSong() {
       console.error("Song upload error:", error);
 
       const message =
-        error.response?.data?.message ||
-        "Upload fail ho gaya, dobara try karein";
+        error.response?.data?.message || "Upload failed. Please try again";
 
       addToast("error", message);
     } finally {
@@ -275,13 +314,41 @@ export default function UploadSong() {
 
   // ---------------- Reset ----------------
   const handleReset = (showToast = true) => {
-    setFormData({ title: "", artist: "", album: "" ,mood: "Happy"});
+    setFormData({
+      title: "",
+      artist: "",
+      album: "",
+      mood: "Happy",
+    });
+
     setImageFile(null);
     setAudioFile(null);
+
+    if (imagePreview) {
+      URL.revokeObjectURL(imagePreview);
+    }
+
+    if (audioPreview) {
+      URL.revokeObjectURL(audioPreview);
+    }
+
     setImagePreview(null);
     setAudioPreview(null);
+
     setErrors({});
-    if (showToast) addToast("success", "Form reset ho gaya");
+    setUploadProgress(0);
+
+    if (imageInputRef.current) {
+      imageInputRef.current.value = "";
+    }
+
+    if (audioInputRef.current) {
+      audioInputRef.current.value = "";
+    }
+
+    if (showToast) {
+      addToast("success", "Form has been reset");
+    }
   };
 
   return (
@@ -452,7 +519,7 @@ export default function UploadSong() {
               </label>
               <label
                 htmlFor="image-input"
-                className={`group flex flex-col items-center justify-center gap-2 h-36 rounded-2xl border-2 border-dashed cursor-pointer transition overflow-hidden bg-black/30 ${
+                className={`group flex items-center justify-center min-h-36 rounded-2xl border-2 border-dashed cursor-pointer transition overflow-hidden bg-black/30 ${
                   errors.image
                     ? "border-rose-500/60"
                     : "border-white/15 hover:border-fuchsia-400/60 hover:bg-fuchsia-500/[0.04]"
@@ -462,20 +529,22 @@ export default function UploadSong() {
                   <img
                     src={imagePreview}
                     alt="Cover preview"
-                    className="w-full h-full object-cover"
+                    className="w-full h-auto max-h-64 object-contain rounded-2xl"
                   />
                 ) : (
-                  <>
+                  <div className="flex flex-col items-center justify-center gap-2 h-36">
                     <div className="w-9 h-9 rounded-full bg-gradient-to-br from-violet-500/20 to-fuchsia-500/20 flex items-center justify-center group-hover:scale-110 transition">
                       <ImageIcon size={18} className="text-fuchsia-300" />
                     </div>
+
                     <span className="text-xs text-gray-500">
                       JPG / PNG / WEBP · max {MAX_IMAGE_SIZE_MB}MB
                     </span>
-                  </>
+                  </div>
                 )}
               </label>
               <input
+                ref={imageInputRef}
                 id="image-input"
                 type="file"
                 accept={ACCEPTED_IMAGE_TYPES.join(",")}
@@ -489,10 +558,12 @@ export default function UploadSong() {
             </div>
 
             {/* Audio upload */}
+            {/* Audio upload */}
             <div>
               <label className="block text-xs font-semibold tracking-wide text-gray-400 mb-1.5 uppercase">
                 Audio File
               </label>
+
               <label
                 htmlFor="audio-input"
                 className={`group flex flex-col items-center justify-center gap-2 h-36 rounded-2xl border-2 border-dashed cursor-pointer transition px-3 text-center bg-black/30 ${
@@ -501,21 +572,42 @@ export default function UploadSong() {
                     : "border-white/15 hover:border-fuchsia-400/60 hover:bg-fuchsia-500/[0.04]"
                 }`}
               >
-                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-violet-500/20 to-fuchsia-500/20 flex items-center justify-center group-hover:scale-110 transition">
-                  <Music2
-                    size={18}
-                    className={
-                      audioFile ? "text-fuchsia-300" : "text-fuchsia-300/70"
-                    }
-                  />
-                </div>
-                <span className="text-xs text-gray-500 truncate max-w-full">
-                  {audioFile
-                    ? audioFile.name
-                    : `MP3 / WAV / OGG · max ${MAX_AUDIO_SIZE_MB}MB`}
-                </span>
+                {audioFile ? (
+                  <>
+                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-violet-500/20 to-fuchsia-500/20 flex items-center justify-center">
+                      <Music2 size={18} className="text-fuchsia-300" />
+                    </div>
+
+                    <span className="text-xs text-gray-300 truncate max-w-full">
+                      {audioFile.name}
+                    </span>
+
+                    {audioPreview && (
+                      <audio
+                        controls
+                        src={audioPreview}
+                        className="w-full h-8 accent-fuchsia-500"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        Your browser does not support audio playback.
+                      </audio>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-violet-500/20 to-fuchsia-500/20 flex items-center justify-center group-hover:scale-110 transition">
+                      <Music2 size={18} className="text-fuchsia-300/70" />
+                    </div>
+
+                    <span className="text-xs text-gray-500">
+                      MP3 / WAV / OGG · max {MAX_AUDIO_SIZE_MB}MB
+                    </span>
+                  </>
+                )}
               </label>
+
               <input
+                ref={audioInputRef}
                 id="audio-input"
                 type="file"
                 accept={ACCEPTED_AUDIO_TYPES.join(",")}
@@ -523,22 +615,12 @@ export default function UploadSong() {
                 disabled={loading}
                 className="hidden"
               />
+
               {errors.audio && (
                 <p className="text-rose-400 text-xs mt-1">{errors.audio}</p>
               )}
             </div>
           </div>
-
-          {/* Audio preview player */}
-          {audioPreview && (
-            <audio
-              controls
-              src={audioPreview}
-              className="w-full h-10 accent-fuchsia-500"
-            >
-              Your browser audio support nahi karta.
-            </audio>
-          )}
 
           {/* Upload progress */}
           {loading && (

@@ -7,6 +7,8 @@ export const MusicProvider = ({ children }) => {
 
   const [isPlaying, setIsPlaying] = useState(false);
 
+  const [songs, setSongs] = useState([]);
+
   const [queue, setQueue] = useState([]);
 
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -20,12 +22,14 @@ export const MusicProvider = ({ children }) => {
         isPlaying,
         setIsPlaying,
 
+        songs,
+        setSongs,
+
         queue,
         setQueue,
 
         currentIndex,
         setCurrentIndex,
-
       }}
     >
       {children}

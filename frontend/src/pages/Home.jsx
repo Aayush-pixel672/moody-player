@@ -1,6 +1,6 @@
 import Navbar from "../components/Navbar";
 import SongsSection from "../components/SongsSection";
-import MusicPlayer from "../components/MusicPlayer";
+
 import { useState, useEffect } from "react";
 //import songsData from "../utils/songsData"
 import FacialExpression from "../components/FacialExpression";
@@ -17,7 +17,14 @@ import { useLocation } from "react-router-dom";
 import { useMusic } from "../context/MusicContext";
 
 const Home = () => {
-  const { currentSong, setCurrentSong, isPlaying, setIsPlaying } = useMusic();
+  const {
+  currentSong,
+  setCurrentSong,
+  isPlaying,
+  setIsPlaying,
+  songs,
+  setSongs,
+} = useMusic();
   const location = useLocation();
   const [mood, setMood] = useState("Detecting...");
 
@@ -25,7 +32,7 @@ const Home = () => {
     return sessionStorage.getItem("moodDetection") === "true";
   });
 
-  const [songs, setSongs] = useState([]);
+  
 
   const [favorites, setFavorites] = useState([]);
 
@@ -143,10 +150,12 @@ const Home = () => {
             <div className="hero-btn mt-8">
               <Button
                 size="lg"
-                onClick={() => setStartDetection(true)}
+                onClick={() => setStartDetection((prev) => !prev)}
                 className="w-full sm:w-auto"
               >
-                Start Mood Detection
+                {startDetection
+                  ? "Stop Mood Detection"
+                  : "Start Mood Detection"}
               </Button>
             </div>
 
@@ -246,9 +255,9 @@ const Home = () => {
           setStartDetection={setStartDetection}
         />
       </div>
-      {/* MUSIC PLAYER */}
+      
 
-      <MusicPlayer songsData={songs} />
+      
     </div>
   );
 };

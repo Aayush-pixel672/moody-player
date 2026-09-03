@@ -2,7 +2,11 @@ import { useEffect, useRef } from "react";
 import * as faceapi from "face-api.js";
 import * as tf from "@tensorflow/tfjs";
 
-const FacialExpression = ({ setMood, startDetection }) => {
+const FacialExpression = ({
+  setMood,
+  startDetection,
+  
+}) => {
   const videoRef = useRef(null);
 
   // Camera stream ko store karenge
@@ -47,6 +51,8 @@ const FacialExpression = ({ setMood, startDetection }) => {
 
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
+
+        await videoRef.current.play();
       }
     } catch (error) {
       console.error("Camera error:", error);
@@ -81,7 +87,7 @@ const FacialExpression = ({ setMood, startDetection }) => {
     // Agar pehle se interval chal raha hai
     // toh doosra interval create nahi karna
     if (intervalRef.current) return;
-
+    
     intervalRef.current = setInterval(async () => {
       if (!videoRef.current) return;
 
@@ -133,6 +139,8 @@ const FacialExpression = ({ setMood, startDetection }) => {
       intervalRef.current = null;
     }
 
+    
+
     console.log("Mood detection stopped");
   };
 
@@ -153,11 +161,15 @@ const FacialExpression = ({ setMood, startDetection }) => {
 
         if (cancelled || !videoRef.current) return;
 
-        videoRef.current.onloadedmetadata = () => {
-          if (cancelled) return;
-
+        if (videoRef.current.readyState >= 2) {
           startMoodDetection();
-        };
+        } else {
+          videoRef.current.onloadedmetadata = () => {
+            if (cancelled) return;
+
+            startMoodDetection();
+          };
+        }
       } catch (error) {
         console.error("Failed to start mood detection:", error);
       }
