@@ -11,6 +11,8 @@ const historyRoutes = require('./routes/History.routes')
 
 const authRoutes = require('./routes/Auth.routes')
 
+const playlistRoutes = require('./routes/Playlist.routes')
+
 app.use(express.json());
 app.use(cors());
 
@@ -30,5 +32,7 @@ app.use('/favorites', favoriteRoutes) // yaha pe hum apne favorite routes ko use
 app.use('/history', historyRoutes) // yaha pe hum apne history routes ko use karenge taki jab bhi koi request aayegi to wo history routes ke through jayegi
 
 app.use('/auth', authRoutes) // yaha pe hum apne auth routes ko use karenge taki jab bhi koi request aayegi to wo auth routes ke through jayegi
+
+app.use("/playlists",playlistRoutes)
 
 module.exports = app;
