@@ -123,7 +123,7 @@ const MusicPlayer = () => {
 
     setCurrentSong(previousSong);
   };
-  
+
   // AUTO PLAY
 
   useEffect(() => {
@@ -437,11 +437,13 @@ const MusicPlayer = () => {
 
       {/* CENTER */}
 
-      <div className="flex w-[50%] flex-col items-center sm:w-[45%] md:w-[42%] lg:w-[40%]">
-        <div className="flex items-center gap-3 sm:gap-4 lg:gap-6">
+      {/* CENTER */}
+
+      <div className="flex w-[52%] flex-col items-center sm:w-[45%] md:w-[42%] lg:w-[40%]">
+        <div className="flex items-center gap-1 sm:gap-4 lg:gap-6">
           <button
             onClick={() => setIsRepeat(!isRepeat)}
-            className={`flex h-9 w-9 items-center justify-center rounded-full transition-all duration-300 ${
+            className={`flex h-8 w-8 items-center justify-center rounded-full transition-all duration-300 sm:h-9 sm:w-9 ${
               isRepeat
                 ? "bg-purple-600 text-white shadow-lg shadow-purple-500/40"
                 : "bg-white/5 hover:bg-purple-600/20"
@@ -452,7 +454,7 @@ const MusicPlayer = () => {
 
           <button
             onClick={playPreviousSong}
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-white/5 transition-all duration-300 hover:scale-110 hover:bg-purple-600/20 sm:h-10 sm:w-10 lg:h-11 lg:w-11"
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-white/5 transition-all duration-300 hover:scale-110 hover:bg-purple-600/20 sm:h-10 sm:w-10 lg:h-11 lg:w-11"
           >
             <SkipBack size={22} />
           </button>
@@ -466,13 +468,14 @@ const MusicPlayer = () => {
 
           <button
             onClick={playNextSong}
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-white/5 transition-all duration-300 hover:scale-110 hover:bg-purple-600/20 sm:h-10 sm:w-10 lg:h-11 lg:w-11"
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-white/5 transition-all duration-300 hover:scale-110 hover:bg-purple-600/20 sm:h-10 sm:w-10 lg:h-11 lg:w-11"
           >
             <SkipForward size={22} />
           </button>
+
           <button
             onClick={() => setIsShuffle(!isShuffle)}
-            className={`flex h-9 w-9 items-center justify-center rounded-full transition-all duration-300 ${
+            className={`flex h-8 w-8 items-center justify-center rounded-full transition-all duration-300 sm:h-9 sm:w-9 ${
               isShuffle
                 ? "bg-purple-600 text-white shadow-lg shadow-purple-500/40"
                 : "bg-white/5 hover:bg-purple-600/20"

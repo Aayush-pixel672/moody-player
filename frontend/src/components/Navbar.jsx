@@ -6,6 +6,7 @@ import {
   LogOut,
   Upload,
   LayoutDashboard,
+  ListMusic,
   Menu,
   X,
 } from "lucide-react";
@@ -91,7 +92,17 @@ const Navbar = () => {
               Favorites
             </Link>
 
-            <Link to="/playlists">Playlists</Link>
+            <Link
+              to="/playlists"
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all duration-300 ${
+                location.pathname === "/playlists"
+                  ? "bg-purple-600 text-white shadow-lg shadow-purple-500/30"
+                  : "hover:bg-purple-500/15 hover:text-purple-400"
+              }`}
+            >
+              <ListMusic size={18} />
+              Playlists
+            </Link>
 
             {/* Admin Dashboard */}
             {user.role === "admin" && (
@@ -212,20 +223,39 @@ const Navbar = () => {
                   <>
                     <Link
                       to="/history"
-                      onClick={() => setMenuOpen(false)}
-                      className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-purple-500/15"
+                      className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all duration-300 ${
+                        location.pathname === "/history"
+                          ? "bg-purple-600 text-white shadow-lg shadow-purple-500/30"
+                          : "hover:bg-purple-500/15 hover:text-purple-400"
+                      }`}
                     >
-                      <History size={20} />
+                      <History size={18} />
                       History
                     </Link>
 
                     <Link
                       to="/favorites"
-                      onClick={() => setMenuOpen(false)}
-                      className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-purple-500/15"
+                      className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all duration-300 ${
+                        location.pathname === "/favorites"
+                          ? "bg-purple-600 text-white shadow-lg shadow-purple-500/30"
+                          : "hover:bg-purple-500/15 hover:text-purple-400"
+                      }`}
                     >
-                      <Heart size={20} />
+                      <Heart size={18} />
                       Favorites
+                    </Link>
+
+                    <Link
+                      to="/playlists"
+                      onClick={() => setMenuOpen(false)}
+                      className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 ${
+                        location.pathname === "/playlists"
+                          ? "bg-purple-600 text-white"
+                          : "hover:bg-purple-500/15"
+                      }`}
+                    >
+                      <ListMusic size={20} />
+                      Playlists
                     </Link>
 
                     {user.role === "admin" && (

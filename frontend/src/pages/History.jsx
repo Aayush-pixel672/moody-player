@@ -52,15 +52,7 @@ const History = () => {
         y: 50,
         duration: 0.8,
       })
-        .from(
-          ".search-section",
-          {
-            opacity: 0,
-            y: 30,
-            duration: 0.45,
-          },
-          "-=0.35",
-        )
+
         .from(
           ".history-card",
           {
@@ -123,7 +115,7 @@ const History = () => {
   return (
     <div
       ref={container}
-      className="min-h-screen bg-black px-4 py-6 text-white sm:px-6 md:p-10"
+      className="min-h-screen bg-black px-4 py-6 pb-40 text-white sm:px-6 md:p-10 md:pb-40"
     >
       <div className="hero relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-zinc-900 via-zinc-800 to-black p-6 md:p-10 shadow-[0_15px_60px_rgba(0,0,0,0.45)] mb-10">
         <div className="absolute -top-24 -right-24 h-72 w-72 rounded-full bg-purple-600/20 blur-3xl" />
@@ -247,7 +239,7 @@ const History = () => {
           {filteredHistory.map((item) => (
             <div
               key={item._id}
-              className="history-card flex flex-col gap-5 rounded-3xl border border-zinc-800 bg-gradient-to-br from-zinc-900 to-zinc-950 p-4 transition-all duration-300 hover:border-purple-500/40 hover:shadow-xl hover:shadow-purple-500/10 sm:flex-row sm:items-center sm:justify-between sm:p-5"
+              className="history-card flex flex-col gap-5 rounded-3xl border border-white/10 bg-gradient-to-br from-zinc-900 via-zinc-900 to-zinc-950 p-4 transition-all duration-300 hover:-translate-y-1 hover:border-purple-500/40 hover:shadow-[0_15px_40px_rgba(168,85,247,0.12)] sm:flex-row sm:items-center sm:p-5"
             >
               <img
                 src={item.songId?.image}
@@ -255,7 +247,7 @@ const History = () => {
                 className="h-20 w-20 self-center rounded-2xl border border-white/10 object-cover shadow-lg sm:h-24 sm:w-24 sm:self-auto"
               />
 
-              <div className="flex w-full flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex w-full min-w-0 flex-col gap-4 sm:grid sm:grid-cols-3 sm:items-center">
                 <div className="min-w-0">
                   <h2 className="truncate text-lg font-bold text-white sm:text-xl lg:text-2xl">
                     {item.songId?.title}
@@ -279,16 +271,18 @@ const History = () => {
                 <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
                   <button
                     onClick={() => playAgain(item.songId)}
-                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-purple-600 to-pink-500 px-5 py-2.5 shadow-lg shadow-purple-500/30 transition-all duration-300 hover:scale-105 sm:w-auto"
+                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-purple-600 to-pink-500 px-5 py-2.5 font-medium text-white shadow-lg shadow-purple-500/30 transition-all duration-300 hover:scale-105 sm:w-auto"
                   >
-                    ▶ Play Again
+                    <Play size={16} fill="currentColor" />
+                    <span>Play Again</span>
                   </button>
 
                   <button
                     onClick={() => removeHistory(item._id)}
                     className="flex w-full items-center justify-center gap-2 rounded-xl border border-red-500/20 bg-red-500/10 px-5 py-2.5 text-red-400 transition-all duration-300 hover:bg-red-500 hover:text-white sm:w-auto"
                   >
-                    🗑 Remove
+                    <Trash2 size={16} />
+                    <span>Remove</span>
                   </button>
                 </div>
               </div>

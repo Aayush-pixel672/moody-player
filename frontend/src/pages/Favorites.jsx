@@ -51,15 +51,7 @@ const Favorites = () => {
         y: 50,
         duration: 0.8,
       })
-        .from(
-          ".search-section",
-          {
-            opacity: 0,
-            y: 30,
-            duration: 0.45,
-          },
-          "-=0.35",
-        )
+        
         .from(
           ".favorite-card",
           {
@@ -110,7 +102,7 @@ const Favorites = () => {
   return (
     <div
       ref={container}
-      className="min-h-screen bg-black px-4 py-6 text-white sm:px-6 md:p-10"
+      className="min-h-screen bg-black px-4 py-6 pb-40 text-white sm:px-6 md:p-10 md:pb-40"
     >
       <div className="hero relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-zinc-900 via-zinc-800 to-black p-6 md:p-10 shadow-[0_15px_60px_rgba(0,0,0,0.45)] mb-10">
         {/* Background Glow */}
@@ -239,7 +231,7 @@ const Favorites = () => {
           {filteredFavorites.map((favorite) => (
             <div
               key={favorite._id}
-              className="favorite-card flex flex-col gap-5 rounded-3xl border border-zinc-800 bg-gradient-to-br from-zinc-900 to-zinc-950 p-4 transition-all duration-300 hover:border-pink-500/40 hover:shadow-xl hover:shadow-pink-500/10 sm:flex-row sm:items-center sm:justify-between sm:p-5"
+              className="favorite-card flex flex-col gap-5 rounded-3xl border border-white/10 bg-gradient-to-br from-zinc-900 via-zinc-900 to-zinc-950 p-4 transition-all duration-300 hover:-translate-y-1 hover:border-pink-500/40 hover:shadow-[0_15px_40px_rgba(236,72,153,0.12)] sm:flex-row sm:items-center sm:p-5"
             >
               <img
                 src={favorite.songId?.image}
@@ -247,7 +239,7 @@ const Favorites = () => {
                 className="h-20 w-20 self-center rounded-2xl border border-white/10 object-cover shadow-lg sm:h-24 sm:w-24 sm:self-auto"
               />
 
-              <div className="flex w-full flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex w-full min-w-0 flex-col gap-4 sm:grid sm:grid-cols-3 sm:items-center">
                 <div className="min-w-0">
                   <h2 className="truncate text-lg font-bold text-white sm:text-xl lg:text-2xl">
                     {favorite.songId?.title}
